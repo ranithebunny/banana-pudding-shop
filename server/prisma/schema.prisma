@@ -1,0 +1,193 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+enum Role {
+  CUSTOMER
+  STAFF
+  OWNER
+}
+
+model User {
+  id                     String                  @id @default(uuid())
+  email                  String                  @unique
+  password               String
+  name                   String
+  phone                  String?
+  role                   Role                    @default(CUSTOMER)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  orders                 Order[]
+  verifiedPayments       Payment[]
+  inventoryTransactions  InventoryTransaction[]
+  expenses               Expense[]
+  auditLogs              AuditLog[]
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  products  Product[]
+}
+
+model Product {
+  id                     String                  @id @default(uuid())
+  name                   String
+  description            String?
+  price                  Decimal                 @db.Decimal(10, 2)
+  cost                   Decimal                 @db.Decimal(10, 2)
+  image                  String?
+  categoryId             String?
+  category               Category?               @relation(fields: [categoryId], references: [id])
+  isActive               Boolean                 @default(true)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  orderItems             OrderItem[]
+  inventoryTransactions  InventoryTransaction[]
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAYMENT_REVIEW
+  CONFIRMED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum FulfillmentType {
+  PICKUP
+  DELIVERY
+}
+
+model Order {
+  id               String          @id @default(uuid())
+  orderNumber      String          @unique
+  customerId       String
+  customer         User            @relation(fields: [customerId], references: [id])
+  status           OrderStatus     @default(PENDING_PAYMENT)
+  subtotal         Decimal         @db.Decimal(10, 2)
+  discount         Decimal         @default(0) @db.Decimal(10, 2)
+  total            Decimal         @db.Decimal(10, 2)
+  fulfillmentType  FulfillmentType
+  pickupDate       DateTime?
+  pickupTime       String?
+  deliveryAddress  String?
+  notes            String?
+  items            OrderItem[]
+  payment          Payment?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+model OrderItem {
+  id          String   @id @default(uuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id])
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  productName String
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  subtotal    Decimal  @db.Decimal(10, 2)
+}
+
+enum PaymentMethod {
+  GCASH
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model Payment {
+  id               String        @id @default(uuid())
+  orderId          String        @unique
+  order            Order         @relation(fields: [orderId], references: [id])
+  paymentMethod    PaymentMethod
+  amount           Decimal       @db.Decimal(10, 2)
+  proofUrl         String?
+  status           PaymentStatus @default(PENDING)
+  rejectionReason  String?
+  verifiedById     String?
+  verifiedBy       User?         @relation(fields: [verifiedById], references: [id])
+  verifiedAt       DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+enum InventoryTransactionType {
+  RESTOCK
+  SALE
+  ADJUSTMENT
+  WASTE
+  RETURN
+}
+
+model InventoryTransaction {
+  id           String                    @id @default(uuid())
+  productId    String
+  product      Product                   @relation(fields: [productId], references: [id])
+  type         InventoryTransactionType
+  quantity     Int
+  reason       String?
+  referenceId  String?
+  createdById  String
+  createdBy    User                      @relation(fields: [createdById], references: [id])
+  createdAt    DateTime                  @default(now())
+}
+
+enum ExpenseCategory {
+  GROCERIES
+  PACKAGING
+  DELIVERY
+  MARKETING
+  EQUIPMENT
+  OTHER
+}
+
+model Expense {
+  id           String          @id @default(uuid())
+  category     ExpenseCategory
+  description  String?
+  amount       Decimal         @db.Decimal(10, 2)
+  date         DateTime
+  createdById  String
+  createdBy    User            @relation(fields: [createdById], references: [id])
+  createdAt    DateTime        @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String
+  createdAt DateTime @default(now())
+}
+
+model BusinessSettings {
+  id              String   @id @default(uuid())
+  gcashNumber     String?
+  gcashName       String?
+  bankName        String?
+  bankAccount     String?
+  bankAccountName String?
+  updatedAt       DateTime @updatedAt
+}

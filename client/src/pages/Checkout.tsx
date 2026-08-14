@@ -1,0 +1,139 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useCart } from '../context/CartContext'
+import { apiFetch } from '../lib/api'
+
+function Checkout() {
+  const { items, total, clearCart } = useCart()
+  const navigate = useNavigate()
+
+  const [fulfillmentType, setFulfillmentType] = useState('PICKUP')
+  const [pickupDate, setPickupDate] = useState('')
+  const [pickupTime, setPickupTime] = useState('')
+  const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [notes, setNotes] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const order = await apiFetch('/orders', {
+        method: 'POST',
+        body: JSON.stringify({
+          items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+          fulfillmentType,
+          pickupDate: pickupDate || undefined,
+          pickupTime: pickupTime || undefined,
+          deliveryAddress: deliveryAddress || undefined,
+          notes: notes || undefined,
+        }),
+      })
+
+      clearCart()
+      navigate(`/orders/${order.id}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to place order.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (items.length === 0) {
+    return <div className="p-8 text-center text-gray-600">Your cart is empty.</div>
+  }
+
+  return (
+    <div className="p-8 max-w-lg mx-auto">
+      <h1 className="text-2xl font-bold mb-6">Checkout</h1>
+
+      <div className="mb-6 border rounded-lg p-4">
+        {items.map((item) => (
+          <div key={item.productId} className="flex justify-between text-sm mb-1">
+            <span>{item.name} × {item.quantity}</span>
+            <span>₱{item.price * item.quantity}</span>
+          </div>
+        ))}
+        <div className="flex justify-between font-bold mt-2 pt-2 border-t">
+          <span>Total</span>
+          <span>₱{total}</span>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Pickup or Delivery</label>
+          <select
+            value={fulfillmentType}
+            onChange={(e) => setFulfillmentType(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+          >
+            <option value="PICKUP">Pickup</option>
+            <option value="DELIVERY">Delivery</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            {fulfillmentType === 'PICKUP' ? 'Pickup Date' : 'Delivery Date'}
+          </label>
+          <input
+            type="date"
+            value={pickupDate}
+            onChange={(e) => setPickupDate(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Preferred Time</label>
+          <input
+            type="text"
+            value={pickupTime}
+            onChange={(e) => setPickupTime(e.target.value)}
+            placeholder="e.g. 2:00 PM"
+            className="w-full border rounded px-3 py-2"
+            required
+          />
+        </div>
+
+        {fulfillmentType === 'DELIVERY' && (
+          <div>
+            <label className="block text-sm font-medium mb-1">Delivery Address</label>
+            <textarea
+              value={deliveryAddress}
+              onChange={(e) => setDeliveryAddress(e.target.value)}
+              className="w-full border rounded px-3 py-2"
+              required
+            />
+          </div>
+        )}
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Order Notes (optional)</label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="w-full border rounded px-3 py-2"
+          />
+        </div>
+
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white rounded py-2 font-medium disabled:opacity-50"
+        >
+          {loading ? 'Placing order...' : 'Place Order'}
+        </button>
+      </form>
+    </div>
+  )
+}
+
+export default Checkout
