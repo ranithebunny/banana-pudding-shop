@@ -25,20 +25,22 @@ function Nav() {
 
         {user ? (
           <>
-{(user.role === 'STAFF' || user.role === 'OWNER') && (
-  <>
-    <Link to="/staff/payments" className="text-sm text-gray-700">Payments</Link>
-    <Link to="/staff/inventory" className="text-sm text-gray-700">Inventory</Link>
-    <Link to="/staff/orders" className="text-sm text-gray-700">Orders</Link>
-    <Link to="/dashboard" className="text-sm text-gray-700">Dashboard</Link>
-  </>
-)}
-{user.role === 'OWNER' && (
-  <>
-    <Link to="/owner/expenses" className="text-sm text-gray-700">Expenses</Link>
-    <Link to="/owner/audit-logs" className="text-sm text-gray-700">Audit Log</Link>
-  </>
-)}
+            <Link to="/orders" className="text-sm text-gray-700">My Orders</Link>
+
+            {(user.role === 'STAFF' || user.role === 'OWNER') && (
+              <>
+                <Link to="/staff/payments" className="text-sm text-gray-700">Payments</Link>
+                <Link to="/staff/inventory" className="text-sm text-gray-700">Inventory</Link>
+                <Link to="/staff/orders" className="text-sm text-gray-700">Orders</Link>
+                <Link to="/dashboard" className="text-sm text-gray-700">Dashboard</Link>
+              </>
+            )}
+            {user.role === 'OWNER' && (
+              <>
+                <Link to="/owner/expenses" className="text-sm text-gray-700">Expenses</Link>
+                <Link to="/owner/audit-logs" className="text-sm text-gray-700">Audit Log</Link>
+              </>
+            )}
 
             <span className="text-sm text-gray-600">Hi, {user.name}</span>
             <button onClick={handleLogout} className="text-sm text-red-600">

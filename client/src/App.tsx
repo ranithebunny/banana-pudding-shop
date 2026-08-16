@@ -14,7 +14,7 @@ import StaffOrders from './pages/StaffOrders'
 import OwnerExpenses from './pages/OwnerExpenses'
 import Dashboard from './pages/Dashboard'
 import AuditLogs from './pages/AuditLogs'
-
+import MyOrders from './pages/MyOrders'
 function App() {
   return (
     <>
@@ -27,6 +27,7 @@ function App() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/orders/:id" element={<OrderDetail />} />
         <Route path="/orders/:id/pay" element={<PaymentUpload />} />
+        <Route path="/orders" element={<MyOrders />} />
         <Route
           path="/staff/payments"
           element={
