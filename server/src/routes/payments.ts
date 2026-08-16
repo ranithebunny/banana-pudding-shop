@@ -21,8 +21,21 @@ const upload = multer({
   },
 });
 
+function handleUploadError(err: any, req: any, res: any, next: any) {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'File is too large. Maximum size is 5MB.' });
+    }
+    return res.status(400).json({ error: err.message });
+  }
+  if (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  next();
+}
+
 // POST /api/orders/:id/payment — submit payment method + proof for an order
-router.post('/orders/:id/payment', authenticate, upload.single('proof'), async (req, res) => {
+router.post('/orders/:id/payment', authenticate, upload.single('proof'), handleUploadError, async (req, res) => {
   try {
     const order = await prisma.order.findUnique({ where: { id: req.params.id } });
 
@@ -56,30 +69,30 @@ router.post('/orders/:id/payment', authenticate, upload.single('proof'), async (
       return res.status(500).json({ error: 'Failed to upload proof image.' });
     }
 
-const [payment] = await prisma.$transaction([
-  prisma.payment.upsert({
-    where: { orderId: order.id },
-    create: {
-      orderId: order.id,
-      paymentMethod,
-      amount: order.total,
-      proofUrl: fileName,
-      status: 'PENDING',
-    },
-    update: {
-      paymentMethod,
-      proofUrl: fileName,
-      status: 'PENDING',
-      rejectionReason: null,
-      verifiedById: null,
-      verifiedAt: null,
-    },
-  }),
-  prisma.order.update({
-    where: { id: order.id },
-    data: { status: 'PAYMENT_REVIEW' },
-  }),
-]);
+    const [payment] = await prisma.$transaction([
+      prisma.payment.upsert({
+        where: { orderId: order.id },
+        create: {
+          orderId: order.id,
+          paymentMethod,
+          amount: order.total,
+          proofUrl: fileName,
+          status: 'PENDING',
+        },
+        update: {
+          paymentMethod,
+          proofUrl: fileName,
+          status: 'PENDING',
+          rejectionReason: null,
+          verifiedById: null,
+          verifiedAt: null,
+        },
+      }),
+      prisma.order.update({
+        where: { id: order.id },
+        data: { status: 'PAYMENT_REVIEW' },
+      }),
+    ]);
 
     res.status(201).json(payment);
   } catch (error) {
