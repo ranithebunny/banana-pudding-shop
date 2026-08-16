@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
+
 function PaymentUpload() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -26,7 +28,7 @@ function PaymentUpload() {
       formData.append('proof', file)
 
       const token = localStorage.getItem('token')
-      const response = await fetch(`http://localhost:4000/api/orders/${id}/payment`, {
+      const response = await fetch(`${API_URL}/orders/${id}/payment`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
