@@ -56,21 +56,30 @@ router.post('/orders/:id/payment', authenticate, upload.single('proof'), async (
       return res.status(500).json({ error: 'Failed to upload proof image.' });
     }
 
-    const [payment] = await prisma.$transaction([
-      prisma.payment.create({
-        data: {
-          orderId: order.id,
-          paymentMethod,
-          amount: order.total,
-          proofUrl: fileName,
-          status: 'PENDING',
-        },
-      }),
-      prisma.order.update({
-        where: { id: order.id },
-        data: { status: 'PAYMENT_REVIEW' },
-      }),
-    ]);
+const [payment] = await prisma.$transaction([
+  prisma.payment.upsert({
+    where: { orderId: order.id },
+    create: {
+      orderId: order.id,
+      paymentMethod,
+      amount: order.total,
+      proofUrl: fileName,
+      status: 'PENDING',
+    },
+    update: {
+      paymentMethod,
+      proofUrl: fileName,
+      status: 'PENDING',
+      rejectionReason: null,
+      verifiedById: null,
+      verifiedAt: null,
+    },
+  }),
+  prisma.order.update({
+    where: { id: order.id },
+    data: { status: 'PAYMENT_REVIEW' },
+  }),
+]);
 
     res.status(201).json(payment);
   } catch (error) {
