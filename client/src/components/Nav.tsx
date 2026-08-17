@@ -15,8 +15,7 @@ function Nav() {
   }
 
   return (
-    <nav className="bg-white border-b px-6 py-4 flex items-center justify-between">
-      <Link to="/" className="font-bold text-lg">@rnb.akes</Link>
+<nav className="bg-amber-100 border-b border-amber-200 px-6 py-4 flex items-center justify-between">      <Link to="/" className="font-bold text-lg">@rnb.akes</Link>
 
       <div className="flex items-center gap-4">
         <Link to="/cart" className="text-sm text-gray-700">

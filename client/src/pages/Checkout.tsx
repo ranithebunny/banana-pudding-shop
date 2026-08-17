@@ -48,16 +48,16 @@ function Checkout() {
 
   return (
     <div className="p-8 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Checkout</h1>
+      <h1 className="text-2xl font-bold mb-6 text-amber-900">Checkout</h1>
 
-      <div className="mb-6 border rounded-lg p-4">
+      <div className="mb-6 bg-white border border-amber-200 rounded-lg p-4">
         {items.map((item) => (
-          <div key={item.productId} className="flex justify-between text-sm mb-1">
+          <div key={item.productId} className="flex justify-between text-sm mb-1 text-gray-700">
             <span>{item.name} × {item.quantity}</span>
             <span>₱{item.price * item.quantity}</span>
           </div>
         ))}
-        <div className="flex justify-between font-bold mt-2 pt-2 border-t">
+        <div className="flex justify-between font-bold mt-2 pt-2 border-t border-amber-200 text-amber-900">
           <span>Total</span>
           <span>₱{total}</span>
         </div>
@@ -65,11 +65,11 @@ function Checkout() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Pickup or Delivery</label>
+          <label className="block text-sm font-medium mb-1 text-amber-900">Pickup or Delivery</label>
           <select
             value={fulfillmentType}
             onChange={(e) => setFulfillmentType(e.target.value)}
-            className="w-full border rounded px-3 py-2"
+            className="w-full border border-amber-300 rounded px-3 py-2 bg-white"
           >
             <option value="PICKUP">Pickup</option>
             <option value="DELIVERY">Delivery</option>
@@ -77,48 +77,48 @@ function Checkout() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label className="block text-sm font-medium mb-1 text-amber-900">
             {fulfillmentType === 'PICKUP' ? 'Pickup Date' : 'Delivery Date'}
           </label>
           <input
             type="date"
             value={pickupDate}
             onChange={(e) => setPickupDate(e.target.value)}
-            className="w-full border rounded px-3 py-2"
+            className="w-full border border-amber-300 rounded px-3 py-2"
             required
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Preferred Time</label>
+          <label className="block text-sm font-medium mb-1 text-amber-900">Preferred Time</label>
           <input
             type="text"
             value={pickupTime}
             onChange={(e) => setPickupTime(e.target.value)}
             placeholder="e.g. 2:00 PM"
-            className="w-full border rounded px-3 py-2"
+            className="w-full border border-amber-300 rounded px-3 py-2"
             required
           />
         </div>
 
         {fulfillmentType === 'DELIVERY' && (
           <div>
-            <label className="block text-sm font-medium mb-1">Delivery Address</label>
+            <label className="block text-sm font-medium mb-1 text-amber-900">Delivery Address</label>
             <textarea
               value={deliveryAddress}
               onChange={(e) => setDeliveryAddress(e.target.value)}
-              className="w-full border rounded px-3 py-2"
+              className="w-full border border-amber-300 rounded px-3 py-2"
               required
             />
           </div>
         )}
 
         <div>
-          <label className="block text-sm font-medium mb-1">Order Notes (optional)</label>
+          <label className="block text-sm font-medium mb-1 text-amber-900">Order Notes (optional)</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="w-full border rounded px-3 py-2"
+            className="w-full border border-amber-300 rounded px-3 py-2"
           />
         </div>
 
@@ -127,7 +127,7 @@ function Checkout() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white rounded py-2 font-medium disabled:opacity-50"
+          className="w-full bg-amber-500 hover:bg-amber-600 text-white rounded py-2 font-medium disabled:opacity-50 transition-colors"
         >
           {loading ? 'Placing order...' : 'Place Order'}
         </button>
