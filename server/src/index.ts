@@ -10,6 +10,8 @@ import expenseRoutes from './routes/expenses';
 import reportRoutes from './routes/reports';
 import auditLogRoutes from './routes/auditLogs';
 import categoryRoutes from './routes/categories';
+import cron from 'node-cron';
+import { autoCancelExpiredOrders } from './lib/autoCancelOrders';
 dotenv.config();
 
 const app = express();
@@ -31,4 +33,8 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
+});
+
+cron.schedule('0 * * * *', () => {
+  autoCancelExpiredOrders().catch((err) => console.error('Auto-cancel job failed:', err));
 });
