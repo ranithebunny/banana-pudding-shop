@@ -161,4 +161,29 @@ router.patch('/:id/status', authenticate, authorize('STAFF', 'OWNER'), async (re
   }
 });
 
+// POST /api/orders/:id/cancel — staff/owner: cancel an order
+router.post('/:id/cancel', authenticate, authorize('STAFF', 'OWNER'), async (req, res) => {
+  try {
+    const order = await prisma.order.findUnique({ where: { id: req.params.id } });
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found.' });
+    }
+    if (order.status === 'COMPLETED' || order.status === 'CANCELLED') {
+      return res.status(400).json({ error: `Cannot cancel an order that is already ${order.status.toLowerCase()}.` });
+    }
+
+    const updated = await prisma.order.update({
+      where: { id: req.params.id },
+      data: { status: 'CANCELLED' },
+    });
+
+    await logAction(req.user!.userId, 'Order cancelled', 'Order', updated.id);
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Cancel order error:', error);
+    res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
+
 export default router;

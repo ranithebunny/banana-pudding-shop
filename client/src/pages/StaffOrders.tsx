@@ -62,16 +62,26 @@ function StaffOrders() {
     }
   }
 
+  async function cancelOrder(orderId: string) {
+    if (!confirm('Are you sure you want to cancel this order?')) return
+    try {
+      await apiFetch(`/orders/${orderId}/cancel`, { method: 'POST' })
+      loadOrders()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to cancel order.')
+    }
+  }
+
   if (loading) return <div className="p-8">Loading orders...</div>
 
   return (
     <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Orders</h1>
+      <h1 className="text-2xl font-bold mb-6 text-amber-900">Orders</h1>
 
       <select
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
-        className="border rounded px-3 py-2 text-sm mb-6"
+        className="border border-amber-300 rounded px-3 py-2 text-sm mb-6 bg-white"
       >
         <option value="">All statuses</option>
         {Object.entries(STATUS_LABELS).map(([value, label]) => (
@@ -85,23 +95,33 @@ function StaffOrders() {
 
       <div className="space-y-3">
         {orders.map((order) => (
-          <div key={order.id} className="border rounded-lg p-4 flex items-center justify-between">
+          <div key={order.id} className="bg-white border border-amber-200 rounded-lg p-4 flex items-center justify-between">
             <div>
-              <p className="font-semibold">{order.orderNumber}</p>
+              <p className="font-semibold text-amber-900">{order.orderNumber}</p>
               <p className="text-sm text-gray-600">
                 {order.customer.name} — ₱{order.total} — {order.fulfillmentType}
               </p>
               <p className="text-xs text-gray-500">{STATUS_LABELS[order.status] || order.status}</p>
             </div>
 
-            {NEXT_STATUS[order.status] && (
-              <button
-                onClick={() => advanceStatus(order.id, NEXT_STATUS[order.status])}
-                className="bg-blue-600 text-white rounded px-4 py-1.5 text-sm font-medium"
-              >
-                Mark as {STATUS_LABELS[NEXT_STATUS[order.status]]}
-              </button>
-            )}
+            <div className="flex gap-2">
+              {NEXT_STATUS[order.status] && (
+                <button
+                  onClick={() => advanceStatus(order.id, NEXT_STATUS[order.status])}
+                  className="bg-amber-500 hover:bg-amber-600 text-white rounded px-4 py-1.5 text-sm font-medium transition-colors"
+                >
+                  Mark as {STATUS_LABELS[NEXT_STATUS[order.status]]}
+                </button>
+              )}
+              {order.status !== 'COMPLETED' && order.status !== 'CANCELLED' && (
+                <button
+                  onClick={() => cancelOrder(order.id)}
+                  className="bg-red-600 hover:bg-red-700 text-white rounded px-4 py-1.5 text-sm font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>
