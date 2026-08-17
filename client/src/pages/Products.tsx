@@ -39,9 +39,12 @@ function Products() {
       <h1 className="text-2xl font-bold mb-6">Our Menu</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {products.map((product) => (
-          <div key={product.id} className="border rounded-lg p-4">
-            <h2 className="font-semibold">{product.name}</h2>
+       {products.map((product) => (
+  <div key={product.id} className="border rounded-lg p-4">
+    {product.image && (
+      <img src={product.image} alt={product.name} className="w-full h-40 object-cover rounded mb-3" />
+    )}
+    <h2 className="font-semibold">{product.name}</h2>
             {product.category && (
               <p className="text-xs text-gray-500 mb-1">{product.category.name}</p>
             )}
