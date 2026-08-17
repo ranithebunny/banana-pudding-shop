@@ -15,6 +15,8 @@ import OwnerExpenses from './pages/OwnerExpenses'
 import Dashboard from './pages/Dashboard'
 import AuditLogs from './pages/AuditLogs'
 import MyOrders from './pages/MyOrders'
+import StaffProducts from './pages/StaffProducts'
+
 function App() {
   return (
     <>
@@ -53,6 +55,14 @@ function App() {
           }
         />
         <Route
+          path="/staff/products"
+          element={
+            <RequireRole roles={['STAFF', 'OWNER']}>
+              <StaffProducts />
+            </RequireRole>
+          }
+        />
+        <Route
           path="/owner/expenses"
           element={
             <RequireRole roles={['OWNER']}>
@@ -61,21 +71,21 @@ function App() {
           }
         />
         <Route
-  path="/dashboard"
-  element={
-    <RequireRole roles={['STAFF', 'OWNER']}>
-      <Dashboard />
-    </RequireRole>
-  }
-/>
-<Route
-  path="/owner/audit-logs"
-  element={
-    <RequireRole roles={['OWNER']}>
-      <AuditLogs />
-    </RequireRole>
-  }
-/>
+          path="/dashboard"
+          element={
+            <RequireRole roles={['STAFF', 'OWNER']}>
+              <Dashboard />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/owner/audit-logs"
+          element={
+            <RequireRole roles={['OWNER']}>
+              <AuditLogs />
+            </RequireRole>
+          }
+        />
       </Routes>
     </>
   )

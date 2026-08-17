@@ -33,12 +33,14 @@ function Nav() {
                 <Link to="/staff/inventory" className="text-sm text-gray-700">Inventory</Link>
                 <Link to="/staff/orders" className="text-sm text-gray-700">Orders</Link>
                 <Link to="/dashboard" className="text-sm text-gray-700">Dashboard</Link>
+                <Link to="/staff/products" className="text-sm text-gray-700">Products</Link>
               </>
             )}
             {user.role === 'OWNER' && (
               <>
                 <Link to="/owner/expenses" className="text-sm text-gray-700">Expenses</Link>
                 <Link to="/owner/audit-logs" className="text-sm text-gray-700">Audit Log</Link>
+                <Link to="/staff/products" className="text-sm text-gray-700">Products</Link>
               </>
             )}
 
