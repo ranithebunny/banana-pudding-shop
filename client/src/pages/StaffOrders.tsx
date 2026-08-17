@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../lib/api'
+import { useAuth } from '../context/AuthContext'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
 
 interface Order {
   id: string
@@ -28,6 +31,7 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 function StaffOrders() {
+  const { user } = useAuth()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -69,6 +73,24 @@ function StaffOrders() {
       loadOrders()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to cancel order.')
+    }
+  }
+
+  async function deleteOrder(orderId: string) {
+    if (!confirm('Permanently delete this order? This cannot be undone.')) return
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/orders/${orderId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to delete order.')
+      }
+      loadOrders()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete order.')
     }
   }
 
@@ -119,6 +141,14 @@ function StaffOrders() {
                   className="bg-red-600 hover:bg-red-700 text-white rounded px-4 py-1.5 text-sm font-medium transition-colors"
                 >
                   Cancel
+                </button>
+              )}
+              {user?.role === 'OWNER' && (
+                <button
+                  onClick={() => deleteOrder(order.id)}
+                  className="text-sm text-gray-500 hover:text-red-600"
+                >
+                  Delete
                 </button>
               )}
             </div>

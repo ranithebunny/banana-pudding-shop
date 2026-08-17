@@ -185,5 +185,26 @@ router.post('/:id/cancel', authenticate, authorize('STAFF', 'OWNER'), async (req
     res.status(500).json({ error: 'Something went wrong.' });
   }
 });
+// DELETE /api/orders/:id — owner only: permanently delete an order from history
+router.delete('/:id', authenticate, authorize('OWNER'), async (req, res) => {
+  try {
+    const order = await prisma.order.findUnique({ where: { id: req.params.id } });
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found.' });
+    }
 
+    await prisma.$transaction([
+      prisma.payment.deleteMany({ where: { orderId: order.id } }),
+      prisma.orderItem.deleteMany({ where: { orderId: order.id } }),
+      prisma.order.delete({ where: { id: order.id } }),
+    ]);
+
+    await logAction(req.user!.userId, 'Order deleted', 'Order', order.id);
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('Delete order error:', error);
+    res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
 export default router;
