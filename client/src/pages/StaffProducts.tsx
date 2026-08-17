@@ -3,6 +3,11 @@ import { apiFetch } from '../lib/api'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
 
+interface Category {
+  id: string
+  name: string
+}
+
 interface Product {
   id: string
   name: string
@@ -16,6 +21,7 @@ interface Product {
 
 function StaffProducts() {
   const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -24,6 +30,9 @@ function StaffProducts() {
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [cost, setCost] = useState('')
+  const [categoryId, setCategoryId] = useState('')
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [showNewCategory, setShowNewCategory] = useState(false)
   const [image, setImage] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -39,8 +48,18 @@ function StaffProducts() {
     }
   }
 
+  async function loadCategories() {
+    try {
+      const data = await apiFetch('/categories')
+      setCategories(data)
+    } catch (err) {
+      console.error('Failed to load categories', err)
+    }
+  }
+
   useEffect(() => {
     loadProducts()
+    loadCategories()
   }, [])
 
   function startEdit(product: Product) {
@@ -49,6 +68,9 @@ function StaffProducts() {
     setDescription(product.description || '')
     setPrice(product.price)
     setCost(product.cost)
+    setCategoryId(product.category?.id || '')
+    setShowNewCategory(false)
+    setNewCategoryName('')
     setImage(null)
   }
 
@@ -58,11 +80,30 @@ function StaffProducts() {
     setDescription('')
     setPrice('')
     setCost('')
+    setCategoryId('')
+    setShowNewCategory(false)
+    setNewCategoryName('')
     setImage(null)
   }
 
   function cancelEdit() {
     setEditingId(null)
+  }
+
+  async function handleCreateCategory() {
+    if (!newCategoryName.trim()) return
+    try {
+      const category = await apiFetch('/categories', {
+        method: 'POST',
+        body: JSON.stringify({ name: newCategoryName.trim() }),
+      })
+      setCategories((prev) => [...prev, category].sort((a, b) => a.name.localeCompare(b.name)))
+      setCategoryId(category.id)
+      setNewCategoryName('')
+      setShowNewCategory(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create category.')
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -81,6 +122,7 @@ function StaffProducts() {
       formData.append('description', description)
       formData.append('price', price)
       formData.append('cost', cost)
+      if (categoryId) formData.append('categoryId', categoryId)
       if (image) formData.append('image', image)
 
       const token = localStorage.getItem('token')
@@ -122,9 +164,9 @@ function StaffProducts() {
   return (
     <div className="p-8 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Products</h1>
+        <h1 className="text-2xl font-bold text-amber-900">Products</h1>
         {editingId === null && (
-          <button onClick={startCreate} className="bg-blue-600 text-white rounded px-4 py-2 text-sm font-medium">
+          <button onClick={startCreate} className="bg-amber-500 hover:bg-amber-600 text-white rounded px-4 py-2 text-sm font-medium transition-colors">
             Add Product
           </button>
         )}
@@ -133,22 +175,22 @@ function StaffProducts() {
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
       {editingId !== null && (
-        <form onSubmit={handleSubmit} className="border rounded-lg p-4 mb-6 space-y-3">
-          <h2 className="font-semibold">{editingId === 'new' ? 'New Product' : 'Edit Product'}</h2>
+        <form onSubmit={handleSubmit} className="bg-white border border-amber-200 rounded-lg p-4 mb-6 space-y-3">
+          <h2 className="font-semibold text-amber-900">{editingId === 'new' ? 'New Product' : 'Edit Product'}</h2>
 
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Product name"
-            className="w-full border rounded px-3 py-2 text-sm"
+            className="w-full border border-amber-300 rounded px-3 py-2 text-sm"
           />
           <input
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Description (optional)"
-            className="w-full border rounded px-3 py-2 text-sm"
+            className="w-full border border-amber-300 rounded px-3 py-2 text-sm"
           />
           <div className="flex gap-3">
             <input
@@ -156,23 +198,73 @@ function StaffProducts() {
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="Price"
-              className="border rounded px-3 py-2 text-sm w-28"
+              className="border border-amber-300 rounded px-3 py-2 text-sm w-28"
             />
             <input
               type="number"
               value={cost}
               onChange={(e) => setCost(e.target.value)}
               placeholder="Cost"
-              className="border rounded px-3 py-2 text-sm w-28"
+              className="border border-amber-300 rounded px-3 py-2 text-sm w-28"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium mb-1">Product Image</label>
+            <label className="block text-sm font-medium mb-1 text-amber-900">Category</label>
+            {!showNewCategory ? (
+              <div className="flex gap-2">
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="flex-1 border border-amber-300 rounded px-3 py-2 text-sm bg-white"
+                >
+                  <option value="">No category</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowNewCategory(true)}
+                  className="text-sm text-amber-600 whitespace-nowrap"
+                >
+                  + New category
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="New category name"
+                  className="flex-1 border border-amber-300 rounded px-3 py-2 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={handleCreateCategory}
+                  className="bg-amber-500 hover:bg-amber-600 text-white rounded px-3 py-2 text-sm transition-colors"
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowNewCategory(false)}
+                  className="text-sm text-gray-600"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1 text-amber-900">Product Image</label>
             <input
               type="file"
               accept="image/jpeg,image/jpg,image/png,image/webp"
               onChange={(e) => setImage(e.target.files?.[0] || null)}
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="w-full border border-amber-300 rounded px-3 py-2 text-sm"
             />
           </div>
 
@@ -180,7 +272,7 @@ function StaffProducts() {
             <button
               type="submit"
               disabled={submitting}
-              className="bg-blue-600 text-white rounded px-4 py-2 text-sm font-medium disabled:opacity-50"
+              className="bg-amber-500 hover:bg-amber-600 text-white rounded px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
             >
               {submitting ? 'Saving...' : 'Save'}
             </button>
@@ -193,14 +285,17 @@ function StaffProducts() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {products.map((product) => (
-          <div key={product.id} className="border rounded-lg p-4">
+          <div key={product.id} className="bg-white border border-amber-200 rounded-lg p-4">
             {product.image && (
               <img src={product.image} alt={product.name} className="w-full h-32 object-cover rounded mb-2" />
             )}
-            <p className="font-semibold">{product.name}</p>
+            <p className="font-semibold text-amber-900">{product.name}</p>
+            {product.category && (
+              <p className="text-xs text-amber-600">{product.category.name}</p>
+            )}
             <p className="text-sm text-gray-600">₱{product.price} · Cost ₱{product.cost}</p>
             <div className="flex gap-2 mt-2">
-              <button onClick={() => startEdit(product)} className="text-sm text-blue-600">Edit</button>
+              <button onClick={() => startEdit(product)} className="text-sm text-amber-600">Edit</button>
               <button onClick={() => toggleActive(product)} className="text-sm text-red-600">
                 {product.isActive ? 'Deactivate' : 'Activate'}
               </button>

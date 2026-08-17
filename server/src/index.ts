@@ -9,7 +9,7 @@ import inventoryRoutes from './routes/inventory';
 import expenseRoutes from './routes/expenses';
 import reportRoutes from './routes/reports';
 import auditLogRoutes from './routes/auditLogs';
-
+import categoryRoutes from './routes/categories';
 dotenv.config();
 
 const app = express();
@@ -23,7 +23,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
-
+app.use('/api/categories', categoryRoutes);
 app.get('/', (req, res) => {
   res.json({ message: 'Server is running' });
 });
