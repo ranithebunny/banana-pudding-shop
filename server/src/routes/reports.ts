@@ -151,12 +151,14 @@ router.get('/inventory', authenticate, authorize('STAFF', 'OWNER'), async (req, 
 // GET /api/reports/dashboard — the at-a-glance numbers for the staff/owner home screen
 router.get('/dashboard', authenticate, authorize('STAFF', 'OWNER'), async (req, res) => {
   try {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+    const PH_OFFSET_MS = 8 * 60 * 60 * 1000; // Philippines is UTC+8
 
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
+const nowPH = new Date(Date.now() + PH_OFFSET_MS);
+const startOfTodayPH = new Date(Date.UTC(nowPH.getUTCFullYear(), nowPH.getUTCMonth(), nowPH.getUTCDate(), 0, 0, 0));
+const startOfToday = new Date(startOfTodayPH.getTime() - PH_OFFSET_MS);
+
+const startOfMonthPH = new Date(Date.UTC(nowPH.getUTCFullYear(), nowPH.getUTCMonth(), 1, 0, 0, 0));
+const startOfMonth = new Date(startOfMonthPH.getTime() - PH_OFFSET_MS);
 
     const [todaysOrders, monthlyOrders, pendingPayments, pendingOrders] = await Promise.all([
       prisma.order.findMany({
