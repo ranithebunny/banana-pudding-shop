@@ -10,6 +10,11 @@ interface OrderItem {
   subtotal: string
 }
 
+interface Payment {
+  status: string
+  rejectionReason: string | null
+}
+
 interface Order {
   id: string
   orderNumber: string
@@ -22,6 +27,8 @@ interface Order {
   deliveryAddress: string | null
   notes: string | null
   items: OrderItem[]
+  payment: Payment | null
+  createdAt: string
 }
 
 function OrderDetail() {
@@ -48,19 +55,38 @@ function OrderDetail() {
   if (error) return <div className="p-8 text-red-600">{error}</div>
   if (!order) return null
 
+  const orderAgeHours = (Date.now() - new Date(order.createdAt).getTime()) / (1000 * 60 * 60)
+  const wasLikelyAutoCancelled = order.status === 'CANCELLED' && orderAgeHours >= 24 && !order.payment
+
   return (
     <div className="p-8 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold mb-1">Order {order.orderNumber}</h1>
+      <h1 className="text-2xl font-bold mb-1 text-amber-900">Order {order.orderNumber}</h1>
       <p className="text-sm text-gray-600 mb-6">Status: {order.status.replace('_', ' ')}</p>
 
-      <div className="border rounded-lg p-4 mb-6">
+      {order.status === 'CANCELLED' && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-sm text-red-800">
+          {wasLikelyAutoCancelled
+            ? 'This order was automatically cancelled because payment wasn\'t submitted within 24 hours.'
+            : 'This order has been cancelled.'}
+        </div>
+      )}
+
+      {order.payment?.status === 'REJECTED' && order.status === 'PENDING_PAYMENT' && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-sm text-red-800">
+          <p className="font-medium mb-1">Your payment was rejected.</p>
+          {order.payment.rejectionReason && <p>Reason: {order.payment.rejectionReason}</p>}
+          <p className="mt-1">Please upload a new proof of payment below.</p>
+        </div>
+      )}
+
+      <div className="bg-white border border-amber-200 rounded-lg p-4 mb-6">
         {order.items.map((item) => (
           <div key={item.id} className="flex justify-between text-sm mb-1">
             <span>{item.productName} × {item.quantity}</span>
             <span>₱{item.subtotal}</span>
           </div>
         ))}
-        <div className="flex justify-between font-bold mt-2 pt-2 border-t">
+        <div className="flex justify-between font-bold mt-2 pt-2 border-t border-amber-200 text-amber-900">
           <span>Total</span>
           <span>₱{order.total}</span>
         </div>
@@ -75,15 +101,17 @@ function OrderDetail() {
       </div>
 
       {order.status === 'PENDING_PAYMENT' && (
-  <Link
-    to={`/orders/${order.id}/pay`}
-    className="inline-block bg-blue-600 text-white rounded px-4 py-2 text-sm font-medium mb-4"
-  >
-    Upload Payment Proof
-  </Link>
-)}
+        <Link
+          to={`/orders/${order.id}/pay`}
+          className="inline-block bg-amber-500 hover:bg-amber-600 text-white rounded px-4 py-2 text-sm font-medium mb-4 transition-colors"
+        >
+          Upload Payment Proof
+        </Link>
+      )}
 
-      <Link to="/" className="text-blue-600 text-sm">Back to menu</Link>
+      <div>
+        <Link to="/" className="text-amber-600 text-sm font-medium">Back to menu</Link>
+      </div>
     </div>
   )
 }

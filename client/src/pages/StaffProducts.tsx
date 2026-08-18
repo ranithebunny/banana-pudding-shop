@@ -16,6 +16,9 @@ interface Product {
   cost: string
   image: string | null
   isActive: boolean
+  variantGroup: string | null
+  variantLabel: string | null
+  isAddOn: boolean
   category: { id: string; name: string } | null
 }
 
@@ -33,6 +36,9 @@ function StaffProducts() {
   const [categoryId, setCategoryId] = useState('')
   const [newCategoryName, setNewCategoryName] = useState('')
   const [showNewCategory, setShowNewCategory] = useState(false)
+  const [variantGroup, setVariantGroup] = useState('')
+  const [variantLabel, setVariantLabel] = useState('')
+  const [isAddOn, setIsAddOn] = useState(false)
   const [image, setImage] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -71,6 +77,9 @@ function StaffProducts() {
     setCategoryId(product.category?.id || '')
     setShowNewCategory(false)
     setNewCategoryName('')
+    setVariantGroup(product.variantGroup || '')
+    setVariantLabel(product.variantLabel || '')
+    setIsAddOn(product.isAddOn)
     setImage(null)
   }
 
@@ -83,6 +92,9 @@ function StaffProducts() {
     setCategoryId('')
     setShowNewCategory(false)
     setNewCategoryName('')
+    setVariantGroup('')
+    setVariantLabel('')
+    setIsAddOn(false)
     setImage(null)
   }
 
@@ -123,6 +135,9 @@ function StaffProducts() {
       formData.append('price', price)
       formData.append('cost', cost)
       if (categoryId) formData.append('categoryId', categoryId)
+      formData.append('variantGroup', variantGroup)
+      formData.append('variantLabel', variantLabel)
+      formData.append('isAddOn', String(isAddOn))
       if (image) formData.append('image', image)
 
       const token = localStorage.getItem('token')
@@ -258,6 +273,37 @@ function StaffProducts() {
             )}
           </div>
 
+          <div className="border-t border-amber-100 pt-3">
+            <p className="text-sm font-medium text-amber-900 mb-2">Variants & Add-ons (optional)</p>
+            <div className="flex gap-3 mb-2">
+              <input
+                type="text"
+                value={variantGroup}
+                onChange={(e) => setVariantGroup(e.target.value)}
+                placeholder="Variant group (e.g. Cookie)"
+                className="flex-1 border border-amber-300 rounded px-3 py-2 text-sm"
+              />
+              <input
+                type="text"
+                value={variantLabel}
+                onChange={(e) => setVariantLabel(e.target.value)}
+                placeholder="Variant label (e.g. Solo)"
+                className="flex-1 border border-amber-300 rounded px-3 py-2 text-sm"
+              />
+            </div>
+            <p className="text-xs text-gray-500 mb-2">
+              Give two or more products the same group name to show them as one item with a dropdown on the menu.
+            </p>
+            <label className="flex items-center gap-2 text-sm text-amber-900">
+              <input
+                type="checkbox"
+                checked={isAddOn}
+                onChange={(e) => setIsAddOn(e.target.checked)}
+              />
+              This is an add-on (offered as an extra when adding other products to cart)
+            </label>
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-1 text-amber-900">Product Image</label>
             <input
@@ -289,10 +335,14 @@ function StaffProducts() {
             {product.image && (
               <img src={product.image} alt={product.name} className="w-full h-32 object-cover rounded mb-2" />
             )}
-            <p className="font-semibold text-amber-900">{product.name}</p>
+            <p className="font-semibold text-amber-900">
+              {product.name}
+              {product.variantLabel && <span className="text-gray-500 font-normal"> ({product.variantLabel})</span>}
+            </p>
             {product.category && (
               <p className="text-xs text-amber-600">{product.category.name}</p>
             )}
+            {product.isAddOn && <p className="text-xs text-amber-600">Add-on</p>}
             <p className="text-sm text-gray-600">₱{product.price} · Cost ₱{product.cost}</p>
             <div className="flex gap-2 mt-2">
               <button onClick={() => startEdit(product)} className="text-sm text-amber-600">Edit</button>
