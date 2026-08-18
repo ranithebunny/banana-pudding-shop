@@ -84,7 +84,7 @@ router.get('/:id', async (req, res) => {
 // POST /api/products — staff/owner only
 router.post('/', authenticate, authorize('STAFF', 'OWNER'), upload.single('image'), handleUploadError, async (req, res) => {
   try {
-    const { name, description, price, cost, categoryId } = req.body;
+    const { name, description, price, cost, categoryId, variantGroup, variantLabel, isAddOn } = req.body;
 
     if (!name || price === undefined || cost === undefined) {
       return res.status(400).json({ error: 'Name, price, and cost are required.' });
@@ -96,7 +96,17 @@ router.post('/', authenticate, authorize('STAFF', 'OWNER'), upload.single('image
     }
 
     const product = await prisma.product.create({
-      data: { name, description, price: Number(price), cost: Number(cost), categoryId: categoryId || undefined, image: imageUrl },
+      data: {
+        name,
+        description,
+        price: Number(price),
+        cost: Number(cost),
+        categoryId: categoryId || undefined,
+        image: imageUrl,
+        variantGroup: variantGroup || undefined,
+        variantLabel: variantLabel || undefined,
+        isAddOn: isAddOn === 'true' || isAddOn === true,
+      },
     });
 
     await logAction(req.user!.userId, 'Product created', 'Product', product.id);
@@ -111,7 +121,7 @@ router.post('/', authenticate, authorize('STAFF', 'OWNER'), upload.single('image
 // PATCH /api/products/:id — staff/owner only
 router.patch('/:id', authenticate, authorize('STAFF', 'OWNER'), upload.single('image'), handleUploadError, async (req, res) => {
   try {
-    const { name, description, price, cost, categoryId, isActive } = req.body;
+    const { name, description, price, cost, categoryId, isActive, variantGroup, variantLabel, isAddOn } = req.body;
 
     let imageUrl: string | undefined;
     if (req.file) {
@@ -127,6 +137,9 @@ router.patch('/:id', authenticate, authorize('STAFF', 'OWNER'), upload.single('i
         cost: cost !== undefined ? Number(cost) : undefined,
         categoryId: categoryId || undefined,
         isActive: isActive !== undefined ? isActive === 'true' || isActive === true : undefined,
+        variantGroup: variantGroup !== undefined ? (variantGroup || null) : undefined,
+        variantLabel: variantLabel !== undefined ? (variantLabel || null) : undefined,
+        isAddOn: isAddOn !== undefined ? (isAddOn === 'true' || isAddOn === true) : undefined,
         ...(imageUrl && { image: imageUrl }),
       },
     });
