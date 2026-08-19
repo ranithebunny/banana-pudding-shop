@@ -14,32 +14,44 @@ function Nav() {
     navigate('/login')
   }
 
+  function handleViewStore() {
+    logout()
+    navigate('/')
+  }
+
+  const isOwner = user?.role === 'OWNER'
+
   return (
-<nav className="bg-amber-100 border-b border-amber-200 px-6 py-4 flex items-center justify-between">      <Link to="/" className="font-bold text-lg">@rnb.akes</Link>
+    <nav className="bg-amber-100 border-b border-amber-200 px-6 py-4 flex items-center justify-between">
+      <Link to="/" className="font-bold text-lg">@rnb.akes</Link>
 
       <div className="flex items-center gap-4">
-        <Link to="/cart" className="text-sm text-gray-700">
-          Cart {itemCount > 0 && <span className="font-semibold">({itemCount})</span>}
-        </Link>
+        {!isOwner && (
+          <Link to="/cart" className="text-sm text-gray-700">
+            Cart {itemCount > 0 && <span className="font-semibold">({itemCount})</span>}
+          </Link>
+        )}
 
         {user ? (
           <>
-            <Link to="/orders" className="text-sm text-gray-700">My Orders</Link>
+            {!isOwner && <Link to="/orders" className="text-sm text-gray-700">My Orders</Link>}
 
             {(user.role === 'STAFF' || user.role === 'OWNER') && (
               <>
                 <Link to="/staff/payments" className="text-sm text-gray-700">Payments</Link>
                 <Link to="/staff/inventory" className="text-sm text-gray-700">Inventory</Link>
                 <Link to="/staff/orders" className="text-sm text-gray-700">Orders</Link>
-                <Link to="/dashboard" className="text-sm text-gray-700">Dashboard</Link>
                 <Link to="/staff/products" className="text-sm text-gray-700">Products</Link>
+                <Link to="/dashboard" className="text-sm text-gray-700">Dashboard</Link>
               </>
             )}
-            {user.role === 'OWNER' && (
+            {isOwner && (
               <>
                 <Link to="/owner/expenses" className="text-sm text-gray-700">Expenses</Link>
                 <Link to="/owner/audit-logs" className="text-sm text-gray-700">Audit Log</Link>
-                <Link to="/staff/products" className="text-sm text-gray-700">Products</Link>
+                <button onClick={handleViewStore} className="text-sm text-amber-700 font-medium">
+                  View Store
+                </button>
               </>
             )}
 

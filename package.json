@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "serve-favicon": "^2.5.1"
+  },
+  "devDependencies": {
+    "@types/serve-favicon": "^2.5.7"
+  }
+}
