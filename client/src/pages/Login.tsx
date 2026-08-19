@@ -16,7 +16,17 @@ function Login() {
     setLoading(true)
     try {
       await login(email, password)
-      navigate('/')
+
+      const storedUser = localStorage.getItem('user')
+      const role = storedUser ? JSON.parse(storedUser).role : null
+
+      if (role === 'OWNER') {
+        navigate('/dashboard')
+      } else if (role === 'STAFF') {
+        navigate('/staff/orders')
+      } else {
+        navigate('/')
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed.')
     } finally {
