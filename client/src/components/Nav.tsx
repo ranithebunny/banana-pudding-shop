@@ -14,10 +14,12 @@ function Nav() {
     navigate('/login')
   }
 
-  function handleViewStore() {
-    logout()
-    navigate('/')
-  }
+function handleViewStore() {
+  const confirmed = confirm('Viewing the store will log you out of your Owner account. Continue?')
+  if (!confirmed) return
+  logout()
+  navigate('/')
+}
 
   const isOwner = user?.role === 'OWNER'
 
