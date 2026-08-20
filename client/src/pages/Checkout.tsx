@@ -122,8 +122,11 @@ function Checkout() {
           />
         </div>
 
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-
+{error && (
+  <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-800">
+    {error}
+  </div>
+)}
         <button
           type="submit"
           disabled={loading}

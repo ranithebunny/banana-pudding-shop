@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticate, authorize } from '../middleware/auth';
 import { logAction } from '../lib/auditLog';
+import { getCurrentStock } from '../lib/inventory';
 
 const router = Router();
 
@@ -24,6 +25,22 @@ router.post('/', authenticate, async (req, res) => {
 
     if (products.length !== productIds.length) {
       return res.status(400).json({ error: 'One or more products are unavailable.' });
+    }
+
+    // Check current stock for every item before creating the order
+    for (const item of items as { productId: string; quantity: number }[]) {
+      const product = products.find((p) => p.id === item.productId)!;
+      const currentStock = await getCurrentStock(product.id);
+      if (currentStock <= 0) {
+        return res.status(400).json({
+          error: `${product.name} is currently out of stock. Please remove it from your cart before checking out.`,
+        });
+      }
+      if (currentStock < item.quantity) {
+        return res.status(400).json({
+          error: `Not enough stock for ${product.name}. Only ${currentStock} left.`,
+        });
+      }
     }
 
     let subtotal = 0;
@@ -185,6 +202,7 @@ router.post('/:id/cancel', authenticate, authorize('STAFF', 'OWNER'), async (req
     res.status(500).json({ error: 'Something went wrong.' });
   }
 });
+
 // DELETE /api/orders/:id — owner only: permanently delete an order from history
 router.delete('/:id', authenticate, authorize('OWNER'), async (req, res) => {
   try {
@@ -207,4 +225,5 @@ router.delete('/:id', authenticate, authorize('OWNER'), async (req, res) => {
     res.status(500).json({ error: 'Something went wrong.' });
   }
 });
+
 export default router;

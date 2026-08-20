@@ -11,6 +11,7 @@ interface Product {
   variantGroup: string | null
   variantLabel: string | null
   isAddOn: boolean
+  stock: number
   category: { id: string; name: string } | null
 }
 
@@ -87,6 +88,8 @@ function Products() {
 
   function handleAddClick(item: DisplayItem) {
     const product = getSelectedProduct(item)
+    if (product.stock <= 0) return
+
     const cartName = item.variants.length > 1 ? `${item.name} (${product.variantLabel})` : item.name
 
     if (addOns.length > 0) {
@@ -128,11 +131,27 @@ function Products() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {displayItems.map((item) => {
           const selected = getSelectedProduct(item)
+          const outOfStock = selected.stock <= 0
           return (
-            <div key={item.key} className="bg-white border border-amber-200 rounded-lg p-4 shadow-sm">
-              {item.image && (
-                <img src={item.image} alt={item.name} className="w-full h-40 object-cover rounded mb-3" />
-              )}
+            <div
+              key={item.key}
+              className={`bg-white border border-amber-200 rounded-lg p-4 shadow-sm ${outOfStock ? 'opacity-60' : ''}`}
+            >
+              <div className="relative">
+                {item.image && (
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className={`w-full h-40 object-cover rounded mb-3 ${outOfStock ? 'grayscale' : ''}`}
+                  />
+                )}
+                {outOfStock && (
+                  <span className="absolute top-2 left-2 bg-gray-800 text-white text-xs font-semibold px-2 py-1 rounded">
+                    OUT OF STOCK
+                  </span>
+                )}
+              </div>
+
               <h2 className="font-semibold text-amber-900">{item.name}</h2>
               {item.category && (
                 <p className="text-xs text-amber-600 mb-1">{item.category.name}</p>
@@ -150,7 +169,9 @@ function Products() {
                   className="w-full border border-amber-300 rounded px-2 py-1.5 text-sm mb-2 bg-white"
                 >
                   {item.variants.map((v) => (
-                    <option key={v.id} value={v.id}>{v.variantLabel}</option>
+                    <option key={v.id} value={v.id}>
+                      {v.variantLabel}{v.stock <= 0 ? ' (Out of stock)' : ''}
+                    </option>
                   ))}
                 </select>
               )}
@@ -158,9 +179,10 @@ function Products() {
               <p className="font-bold mb-3 text-amber-900">₱{selected.price}</p>
               <button
                 onClick={() => handleAddClick(item)}
-                className="w-full bg-amber-500 hover:bg-amber-600 text-white rounded py-1.5 text-sm font-medium transition-colors"
+                disabled={outOfStock}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white rounded py-1.5 text-sm font-medium transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:bg-gray-300"
               >
-                Add to Cart
+                {outOfStock ? 'Out of Stock' : 'Add to Cart'}
               </button>
             </div>
           )

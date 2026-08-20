@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma';
 import { supabaseAdmin } from '../lib/supabase';
 import { authenticate, authorize } from '../middleware/auth';
 import { logAction } from '../lib/auditLog';
+import { getCurrentStock } from '../lib/inventory';
 
 const router = Router();
 
@@ -47,7 +48,7 @@ async function uploadProductImage(file: Express.Multer.File): Promise<string> {
   return data.publicUrl;
 }
 
-// GET /api/products — public, only active products
+// GET /api/products — public, only active products, with current stock
 router.get('/', async (req, res) => {
   try {
     const products = await prisma.product.findMany({
@@ -55,7 +56,15 @@ router.get('/', async (req, res) => {
       include: { category: true },
       orderBy: { name: 'asc' },
     });
-    res.json(products);
+
+    const productsWithStock = await Promise.all(
+      products.map(async (product) => ({
+        ...product,
+        stock: await getCurrentStock(product.id),
+      }))
+    );
+
+    res.json(productsWithStock);
   } catch (error) {
     console.error('Get products error:', error);
     res.status(500).json({ error: 'Something went wrong.' });
@@ -74,7 +83,8 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Product not found.' });
     }
 
-    res.json(product);
+    const stock = await getCurrentStock(product.id);
+    res.json({ ...product, stock });
   } catch (error) {
     console.error('Get product error:', error);
     res.status(500).json({ error: 'Something went wrong.' });
