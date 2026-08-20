@@ -106,7 +106,7 @@ router.get('/payments', authenticate, authorize('STAFF', 'OWNER'), async (req, r
   try {
     const payments = await prisma.payment.findMany({
       where: { status: 'PENDING' },
-      include: { order: { include: { customer: { select: { name: true, email: true } } } } },
+      include: { order: { include: { customer: { select: { name: true, email: true, role: true } } } } },
       orderBy: { createdAt: 'asc' },
     });
     res.json(payments);
@@ -145,13 +145,16 @@ router.post('/payments/:id/verify', authenticate, authorize('STAFF', 'OWNER'), a
   try {
     const payment = await prisma.payment.findUnique({
       where: { id: req.params.id },
-      include: { order: { include: { items: true } } },
+      include: { order: { include: { items: true, customer: true } } },
     });
     if (!payment) {
       return res.status(404).json({ error: 'Payment not found.' });
     }
     if (payment.status !== 'PENDING') {
       return res.status(400).json({ error: 'This payment has already been reviewed.' });
+    }
+    if (payment.order.customer.role === 'STAFF' && req.user!.role !== 'OWNER') {
+      return res.status(403).json({ error: 'Only the owner can review a staff member\'s payment.' });
     }
 
     for (const item of payment.order.items) {
@@ -200,12 +203,18 @@ router.post('/payments/:id/reject', authenticate, authorize('STAFF', 'OWNER'), a
       return res.status(400).json({ error: 'A rejection reason is required.' });
     }
 
-    const payment = await prisma.payment.findUnique({ where: { id: req.params.id } });
+    const payment = await prisma.payment.findUnique({
+      where: { id: req.params.id },
+      include: { order: { include: { customer: true } } },
+    });
     if (!payment) {
       return res.status(404).json({ error: 'Payment not found.' });
     }
     if (payment.status !== 'PENDING') {
       return res.status(400).json({ error: 'This payment has already been reviewed.' });
+    }
+    if (payment.order.customer.role === 'STAFF' && req.user!.role !== 'OWNER') {
+      return res.status(403).json({ error: 'Only the owner can review a staff member\'s payment.' });
     }
 
     await prisma.$transaction([
