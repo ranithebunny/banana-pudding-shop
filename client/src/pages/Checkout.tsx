@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../lib/api'
 
 function Checkout() {
   const { items, total, clearCart } = useCart()
+  const { user } = useAuth()
   const navigate = useNavigate()
 
   const [fulfillmentType, setFulfillmentType] = useState('PICKUP')
@@ -44,6 +46,29 @@ function Checkout() {
 
   if (items.length === 0) {
     return <div className="p-8 text-center text-gray-600">Your cart is empty.</div>
+  }
+
+  if (!user) {
+    return (
+      <div className="p-8 max-w-md mx-auto text-center">
+        <h1 className="text-2xl font-bold mb-3 text-amber-900">Sign up or log in to checkout</h1>
+        <p className="text-gray-600 mb-6">You'll need an account to place an order and track it.</p>
+        <div className="flex gap-3 justify-center">
+          <Link
+            to="/login"
+            className="bg-amber-500 hover:bg-amber-600 text-white rounded px-6 py-2 font-medium transition-colors"
+          >
+            Log in
+          </Link>
+          <Link
+            to="/register"
+            className="border border-amber-300 text-amber-900 rounded px-6 py-2 font-medium"
+          >
+            Register
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -122,11 +147,12 @@ function Checkout() {
           />
         </div>
 
-{error && (
-  <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-800">
-    {error}
-  </div>
-)}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-800">
+            {error}
+          </div>
+        )}
+
         <button
           type="submit"
           disabled={loading}
