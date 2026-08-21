@@ -1,8 +1,33 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../lib/api'
+
+const OPEN_HOUR = 9 // 9:00 AM
+const CLOSE_HOUR = 19 // 7:00 PM
+
+function formatDateInput(d: Date) {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function formatTimeLabel(hour: number, minute: number) {
+  const period = hour >= 12 ? 'PM' : 'AM'
+  const displayHour = hour % 12 === 0 ? 12 : hour % 12
+  const displayMinute = String(minute).padStart(2, '0')
+  return `${displayHour}:${displayMinute} ${period}`
+}
+
+function isSunday(dateStr: string) {
+  if (!dateStr) return false
+  // Parse as local date, not UTC, to avoid off-by-one day issues
+  const [year, month, day] = dateStr.split('-').map(Number)
+  const d = new Date(year, month - 1, day)
+  return d.getDay() === 0
+}
 
 function Checkout() {
   const { items, total, clearCart } = useCart()
@@ -15,7 +40,47 @@ function Checkout() {
   const [deliveryAddress, setDeliveryAddress] = useState('')
   const [notes, setNotes] = useState('')
   const [error, setError] = useState('')
+  const [dateError, setDateError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const today = new Date()
+  const minDateStr = formatDateInput(today)
+
+  function handleDateChange(value: string) {
+    setDateError('')
+    setPickupTime('')
+
+    if (isSunday(value)) {
+      setDateError('Closed on Sundays.')
+      setPickupDate('')
+      return
+    }
+
+    setPickupDate(value)
+  }
+
+  const availableTimes = useMemo(() => {
+    if (!pickupDate) return []
+
+    const isToday = pickupDate === minDateStr
+    const slots: string[] = []
+
+    for (let hour = OPEN_HOUR; hour <= CLOSE_HOUR; hour++) {
+      for (const minute of [0, 30]) {
+        if (hour === CLOSE_HOUR && minute > 0) continue // don't go past 7:00 PM
+
+        if (isToday) {
+          const slotTime = new Date()
+          slotTime.setHours(hour, minute, 0, 0)
+          if (slotTime.getTime() <= today.getTime()) continue
+        }
+
+        slots.push(formatTimeLabel(hour, minute))
+      }
+    }
+
+    return slots
+  }, [pickupDate])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -108,22 +173,34 @@ function Checkout() {
           <input
             type="date"
             value={pickupDate}
-            onChange={(e) => setPickupDate(e.target.value)}
+            min={minDateStr}
+            onChange={(e) => handleDateChange(e.target.value)}
             className="w-full border border-amber-300 rounded px-3 py-2"
             required
           />
+          <p className="text-xs text-gray-500 mt-1">Open daily 9:00 AM–7:00 PM. Closed Sundays.</p>
+          {dateError && <p className="text-red-600 text-sm mt-1">{dateError}</p>}
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-1 text-amber-900">Preferred Time</label>
-          <input
-            type="text"
+          <select
             value={pickupTime}
             onChange={(e) => setPickupTime(e.target.value)}
-            placeholder="e.g. 2:00 PM"
-            className="w-full border border-amber-300 rounded px-3 py-2"
+            disabled={!pickupDate}
+            className="w-full border border-amber-300 rounded px-3 py-2 bg-white disabled:bg-gray-100 disabled:text-gray-400"
             required
-          />
+          >
+            <option value="">
+              {pickupDate ? 'Select a time' : 'Choose a date first'}
+            </option>
+            {availableTimes.map((time) => (
+              <option key={time} value={time}>{time}</option>
+            ))}
+          </select>
+          {pickupDate && availableTimes.length === 0 && (
+            <p className="text-red-600 text-sm mt-1">No time slots left today. Please choose another date.</p>
+          )}
         </div>
 
         {fulfillmentType === 'DELIVERY' && (
