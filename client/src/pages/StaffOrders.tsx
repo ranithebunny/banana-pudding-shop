@@ -56,7 +56,8 @@ function StaffOrders() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('')
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+const [sortBy, setSortBy] = useState('newest')
 
   async function loadOrders() {
     setLoading(true)
@@ -126,6 +127,64 @@ function StaffOrders() {
       setError(err instanceof Error ? err.message : 'Failed to delete order.')
     }
   }
+function getSortedOrders() {
+  const sorted = [...orders]
+
+  // Combine pickup date + pickup time into one sortable date
+  function getFulfillmentDateTime(order: Order) {
+    if (!order.pickupDate) return null
+
+    const date = new Date(order.pickupDate)
+
+    if (order.pickupTime) {
+      const [hours, minutes] = order.pickupTime.split(':').map(Number)
+      date.setHours(hours, minutes, 0, 0)
+    }
+
+    return date.getTime()
+  }
+
+  switch (sortBy) {
+    case 'oldest':
+      return sorted.sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() -
+          new Date(b.createdAt).getTime()
+      )
+
+    case 'upcoming':
+      return sorted.sort((a, b) => {
+        const aDate = getFulfillmentDateTime(a)
+        const bDate = getFulfillmentDateTime(b)
+
+        if (aDate === null) return 1
+        if (bDate === null) return -1
+
+        return aDate - bDate
+      })
+
+    case 'latest':
+      return sorted.sort((a, b) => {
+        const aDate = getFulfillmentDateTime(a)
+        const bDate = getFulfillmentDateTime(b)
+
+        if (aDate === null) return 1
+        if (bDate === null) return -1
+
+        return bDate - aDate
+      })
+
+    case 'newest':
+    default:
+      return sorted.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() -
+          new Date(a.createdAt).getTime()
+      )
+  }
+}
+
+  const sortedOrders = getSortedOrders()
 
   if (loading) return <div className="p-8">Loading orders...</div>
 
@@ -133,24 +192,39 @@ function StaffOrders() {
     <div className="p-8 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-6 text-amber-900">Orders</h1>
 
-      <select
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        className="border border-amber-300 rounded px-3 py-2 text-sm mb-6 bg-white"
-      >
-        <option value="">All statuses</option>
-        {Object.entries(STATUS_LABELS).map(([value, label]) => (
-          <option key={value} value={value}>{label}</option>
-        ))}
-      </select>
+      <div className="flex gap-3 mb-6">
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="border border-amber-300 rounded px-3 py-2 text-sm bg-white"
+        >
+          <option value="">All statuses</option>
+          {Object.entries(STATUS_LABELS).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="border border-amber-300 rounded px-3 py-2 text-sm bg-white"
+        >
+          <option value="newest">Newest orders</option>
+          <option value="oldest">Oldest orders</option>
+          <option value="upcoming">Upcoming pickup/delivery</option>
+          <option value="latest">Latest pickup/delivery</option>
+        </select>
+      </div>
 
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
       {orders.length === 0 && <p className="text-gray-600">No orders found.</p>}
 
       <div className="space-y-3">
-        {orders.map((order) => {
-          const isExpanded = expandedIds.has(order.id)
+{sortedOrders.map((order) => {
+            const isExpanded = expandedIds.has(order.id)
           return (
             <div key={order.id} className="bg-white border border-amber-200 rounded-lg overflow-hidden">
               <button
