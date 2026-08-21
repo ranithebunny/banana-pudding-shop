@@ -56,8 +56,8 @@ function StaffOrders() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('')
-const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
-const [sortBy, setSortBy] = useState('newest')
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+  const [sortBy, setSortBy] = useState('newest')
 
   async function loadOrders() {
     setLoading(true)
@@ -127,65 +127,59 @@ const [sortBy, setSortBy] = useState('newest')
       setError(err instanceof Error ? err.message : 'Failed to delete order.')
     }
   }
-function getSortedOrders() {
-  const sorted = [...orders]
 
   function getFulfillmentDateTime(order: Order) {
     if (!order.pickupDate) return null
 
-    const date = new Date(order.pickupDate)
+    // Parse the date part as local calendar date (avoid UTC-parsing shifting
+    // the day when combined with setHours() below, which mutates in local time).
+    const datePart = order.pickupDate.slice(0, 10) // 'YYYY-MM-DD'
+    const [year, month, day] = datePart.split('-').map(Number)
 
+    let hours = 0
+    let minutes = 0
     if (order.pickupTime) {
-      const [hours, minutes] = order.pickupTime.split(':').map(Number)
-      date.setHours(hours, minutes, 0, 0)
+      ;[hours, minutes] = order.pickupTime.split(':').map(Number)
     }
 
-    return date.getTime()
+    return new Date(year, month - 1, day, hours, minutes, 0, 0).getTime()
   }
 
-  switch (sortBy) {
-    case 'oldest':
-      // Order placed earliest → latest
-      return sorted.sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() -
-          new Date(b.createdAt).getTime()
-      )
+  function getSortedOrders() {
+    const sorted = [...orders]
 
-    case 'upcoming':
-      // Fulfillment soonest → latest
-      return sorted.sort((a, b) => {
-        const aDate = getFulfillmentDateTime(a)
-        const bDate = getFulfillmentDateTime(b)
+    switch (sortBy) {
+      case 'oldest':
+        // Order placed earliest → latest
+        return sorted.sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() -
+            new Date(b.createdAt).getTime()
+        )
 
-        if (aDate === null) return 1
-        if (bDate === null) return -1
+      case 'upcoming':
+        // Fulfillment soonest → latest
+        return sorted.sort((a, b) => {
+          const aDate = getFulfillmentDateTime(a)
+          const bDate = getFulfillmentDateTime(b)
 
-        return aDate - bDate
-      })
+          if (aDate === null && bDate === null) return 0
+          if (aDate === null) return 1
+          if (bDate === null) return -1
 
-    case 'latest':
-      // Fulfillment latest → soonest
-      return sorted.sort((a, b) => {
-        const aDate = getFulfillmentDateTime(a)
-        const bDate = getFulfillmentDateTime(b)
+          return aDate - bDate
+        })
 
-        if (aDate === null) return 1
-        if (bDate === null) return -1
-
-        return bDate - aDate
-      })
-
-    case 'newest':
-    default:
-      // Order placed latest → earliest
-      return sorted.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() -
-          new Date(a.createdAt).getTime()
-      )
+      case 'newest':
+      default:
+        // Order placed latest → earliest
+        return sorted.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() -
+            new Date(a.createdAt).getTime()
+        )
+    }
   }
-}
 
   const sortedOrders = getSortedOrders()
 
@@ -217,7 +211,6 @@ function getSortedOrders() {
           <option value="newest">Newest orders</option>
           <option value="oldest">Oldest orders</option>
           <option value="upcoming">Upcoming pickup/delivery</option>
-          <option value="latest">Latest pickup/delivery</option>
         </select>
       </div>
 
@@ -226,8 +219,8 @@ function getSortedOrders() {
       {orders.length === 0 && <p className="text-gray-600">No orders found.</p>}
 
       <div className="space-y-3">
-{sortedOrders.map((order) => {
-            const isExpanded = expandedIds.has(order.id)
+        {sortedOrders.map((order) => {
+          const isExpanded = expandedIds.has(order.id)
           return (
             <div key={order.id} className="bg-white border border-amber-200 rounded-lg overflow-hidden">
               <button
