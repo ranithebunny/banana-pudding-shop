@@ -57,7 +57,6 @@ function StaffOrders() {
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('')
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
-  const [sortBy, setSortBy] = useState('newest')
 
   async function loadOrders() {
     setLoading(true)
@@ -128,61 +127,6 @@ function StaffOrders() {
     }
   }
 
-  function getFulfillmentDateTime(order: Order) {
-    if (!order.pickupDate) return null
-
-    // Parse the date part as local calendar date (avoid UTC-parsing shifting
-    // the day when combined with setHours() below, which mutates in local time).
-    const datePart = order.pickupDate.slice(0, 10) // 'YYYY-MM-DD'
-    const [year, month, day] = datePart.split('-').map(Number)
-
-    let hours = 0
-    let minutes = 0
-    if (order.pickupTime) {
-      ;[hours, minutes] = order.pickupTime.split(':').map(Number)
-    }
-
-    return new Date(year, month - 1, day, hours, minutes, 0, 0).getTime()
-  }
-
-  function getSortedOrders() {
-    const sorted = [...orders]
-
-    switch (sortBy) {
-      case 'oldest':
-        // Order placed earliest → latest
-        return sorted.sort(
-          (a, b) =>
-            new Date(a.createdAt).getTime() -
-            new Date(b.createdAt).getTime()
-        )
-
-      case 'upcoming':
-        // Fulfillment soonest → latest
-        return sorted.sort((a, b) => {
-          const aDate = getFulfillmentDateTime(a)
-          const bDate = getFulfillmentDateTime(b)
-
-          if (aDate === null && bDate === null) return 0
-          if (aDate === null) return 1
-          if (bDate === null) return -1
-
-          return aDate - bDate
-        })
-
-      case 'newest':
-      default:
-        // Order placed latest → earliest
-        return sorted.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() -
-            new Date(a.createdAt).getTime()
-        )
-    }
-  }
-
-  const sortedOrders = getSortedOrders()
-
   if (loading) return <div className="p-8">Loading orders...</div>
 
   return (
@@ -202,16 +146,6 @@ function StaffOrders() {
             </option>
           ))}
         </select>
-
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="border border-amber-300 rounded px-3 py-2 text-sm bg-white"
-        >
-          <option value="newest">Newest orders</option>
-          <option value="oldest">Oldest orders</option>
-          <option value="upcoming">Upcoming pickup/delivery</option>
-        </select>
       </div>
 
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
@@ -219,7 +153,7 @@ function StaffOrders() {
       {orders.length === 0 && <p className="text-gray-600">No orders found.</p>}
 
       <div className="space-y-3">
-        {sortedOrders.map((order) => {
+        {orders.map((order) => {
           const isExpanded = expandedIds.has(order.id)
           return (
             <div key={order.id} className="bg-white border border-amber-200 rounded-lg overflow-hidden">
