@@ -204,27 +204,14 @@ function Checkout() {
         </div>
 
         {fulfillmentType === 'DELIVERY' && (
-  <div className="space-y-3">
-    <div>
-      <label className="block text-sm font-medium mb-1 text-amber-900">
-        Delivery Address
-      </label>
-      <textarea
-        value={deliveryAddress}
-        onChange={(e) => setDeliveryAddress(e.target.value)}
-        className="w-full border border-amber-300 rounded px-3 py-2"
-        required
-      />
-    </div>
-
-    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-      <p className="font-semibold text-amber-900 mb-1">
-        Self-arranged rider 🛵
-      </p>
-      <p className="text-sm text-gray-600">
-        Buyer books and pays for the rider through Lalamove, Grab, or another courier service. 
-      </p>
-    </div>
+  <div>
+    <label className="block text-sm font-medium mb-1 text-amber-900">Delivery Address</label>
+    <textarea
+      value={deliveryAddress}
+      onChange={(e) => setDeliveryAddress(e.target.value)}
+      className="w-full border border-amber-300 rounded px-3 py-2"
+      required
+    />
   </div>
 )}
 
