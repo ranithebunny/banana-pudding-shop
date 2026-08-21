@@ -130,7 +130,6 @@ const [sortBy, setSortBy] = useState('newest')
 function getSortedOrders() {
   const sorted = [...orders]
 
-  // Combine pickup date + pickup time into one sortable date
   function getFulfillmentDateTime(order: Order) {
     if (!order.pickupDate) return null
 
@@ -146,6 +145,7 @@ function getSortedOrders() {
 
   switch (sortBy) {
     case 'oldest':
+      // Order placed earliest → latest
       return sorted.sort(
         (a, b) =>
           new Date(a.createdAt).getTime() -
@@ -153,6 +153,7 @@ function getSortedOrders() {
       )
 
     case 'upcoming':
+      // Fulfillment soonest → latest
       return sorted.sort((a, b) => {
         const aDate = getFulfillmentDateTime(a)
         const bDate = getFulfillmentDateTime(b)
@@ -164,6 +165,7 @@ function getSortedOrders() {
       })
 
     case 'latest':
+      // Fulfillment latest → soonest
       return sorted.sort((a, b) => {
         const aDate = getFulfillmentDateTime(a)
         const bDate = getFulfillmentDateTime(b)
@@ -176,6 +178,7 @@ function getSortedOrders() {
 
     case 'newest':
     default:
+      // Order placed latest → earliest
       return sorted.sort(
         (a, b) =>
           new Date(b.createdAt).getTime() -
