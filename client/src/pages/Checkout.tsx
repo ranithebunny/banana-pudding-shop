@@ -219,10 +219,10 @@ function Checkout() {
 
     <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
       <p className="font-semibold text-amber-900 mb-1">
-        Self-arranged rider
+        Self-arranged rider 🛵
       </p>
       <p className="text-sm text-gray-600">
-        Buyer books and pays for the rider through Lalamove, Grab, or another courier service.
+        Buyer books and pays for the rider through Lalamove, Grab, or another courier service. 
       </p>
     </div>
   </div>
