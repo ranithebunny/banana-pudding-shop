@@ -83,6 +83,8 @@ model Order {
   status           OrderStatus     @default(PENDING_PAYMENT)
   subtotal         Decimal         @db.Decimal(10, 2)
   discount         Decimal         @default(0) @db.Decimal(10, 2)
+  deliveryMethod   String?
+  deliveryFee      Decimal         @default(0) @db.Decimal(10, 2)
   total            Decimal         @db.Decimal(10, 2)
   fulfillmentType  FulfillmentType
   pickupDate       DateTime?

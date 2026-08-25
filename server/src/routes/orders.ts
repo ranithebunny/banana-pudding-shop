@@ -6,16 +6,24 @@ import { getCurrentStock } from '../lib/inventory';
 
 const router = Router();
 
+const DELIVERY_FEES: Record<string, number> = {
+  OWN_COURIER: 0,
+  TEAM_DELIVERY: 150,
+};
+
 // POST /api/orders — create a new order (customer must be logged in)
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { items, fulfillmentType, pickupDate, pickupTime, deliveryAddress, notes, customerName, contactNumber } = req.body;
+    const { items, fulfillmentType, pickupDate, pickupTime, deliveryAddress, deliveryMethod, notes } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Order must contain at least one item.' });
     }
     if (!fulfillmentType) {
       return res.status(400).json({ error: 'Fulfillment type is required.' });
+    }
+    if (fulfillmentType === 'DELIVERY' && !DELIVERY_FEES.hasOwnProperty(deliveryMethod)) {
+      return res.status(400).json({ error: 'A valid delivery method is required.' });
     }
 
     const productIds = items.map((item: { productId: string }) => item.productId);
@@ -59,6 +67,9 @@ router.post('/', authenticate, async (req, res) => {
       };
     });
 
+    const deliveryFee = fulfillmentType === 'DELIVERY' ? DELIVERY_FEES[deliveryMethod] : 0;
+    const total = subtotal + deliveryFee;
+
     const orderNumber = `ORD-${Date.now()}`;
 
     const order = await prisma.order.create({
@@ -66,7 +77,9 @@ router.post('/', authenticate, async (req, res) => {
         orderNumber,
         customerId: req.user!.userId,
         subtotal,
-        total: subtotal,
+        deliveryMethod: fulfillmentType === 'DELIVERY' ? deliveryMethod : null,
+        deliveryFee,
+        total,
         fulfillmentType,
         pickupDate: pickupDate ? new Date(pickupDate) : null,
         pickupTime,

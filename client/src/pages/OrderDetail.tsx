@@ -20,6 +20,8 @@ interface Order {
   orderNumber: string
   status: string
   subtotal: string
+  deliveryMethod: string | null
+  deliveryFee: string
   total: string
   fulfillmentType: string
   pickupDate: string | null
@@ -29,6 +31,11 @@ interface Order {
   items: OrderItem[]
   payment: Payment | null
   createdAt: string
+}
+
+const DELIVERY_METHOD_LABELS: Record<string, string> = {
+  OWN_COURIER: "Customer's own courier",
+  TEAM_DELIVERY: 'Team-handled delivery',
 }
 
 function OrderDetail() {
@@ -86,6 +93,22 @@ function OrderDetail() {
             <span>₱{item.subtotal}</span>
           </div>
         ))}
+        <div className="flex justify-between text-sm pt-2 border-t border-amber-200 text-gray-700">
+          <span>Subtotal</span>
+          <span>₱{order.subtotal}</span>
+        </div>
+        {order.fulfillmentType === 'DELIVERY' && (
+          <>
+            <div className="flex justify-between text-sm text-gray-700">
+              <span>Delivery Method</span>
+              <span>{order.deliveryMethod ? DELIVERY_METHOD_LABELS[order.deliveryMethod] || order.deliveryMethod : '—'}</span>
+            </div>
+            <div className="flex justify-between text-sm text-gray-700">
+              <span>Delivery Fee</span>
+              <span>₱{order.deliveryFee}</span>
+            </div>
+          </>
+        )}
         <div className="flex justify-between font-bold mt-2 pt-2 border-t border-amber-200 text-amber-900">
           <span>Total</span>
           <span>₱{order.total}</span>

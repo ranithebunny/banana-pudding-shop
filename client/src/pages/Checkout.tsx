@@ -7,6 +7,21 @@ import { apiFetch } from '../lib/api'
 const OPEN_HOUR = 9 // 9:00 AM
 const CLOSE_HOUR = 19 // 7:00 PM
 
+const DELIVERY_OPTIONS = [
+  {
+    value: 'OWN_COURIER',
+    label: "I'll book my own courier",
+    description: "Book your preferred courier (Lalamove, Grab, etc.) by coordinating with us through Instagram @rnb.akes.",
+    fee: 0,
+  },
+  {
+    value: 'TEAM_DELIVERY',
+    label: 'Let our team handle delivery',
+    description: 'Fixed delivery fee of ₱150 within Metro Manila.',
+    fee: 150,
+  },
+]
+
 function formatDateInput(d: Date) {
   const year = d.getFullYear()
   const month = String(d.getMonth() + 1).padStart(2, '0')
@@ -23,18 +38,18 @@ function formatTimeLabel(hour: number, minute: number) {
 
 function isSunday(dateStr: string) {
   if (!dateStr) return false
-  // Parse as local date, not UTC, to avoid off-by-one day issues
   const [year, month, day] = dateStr.split('-').map(Number)
   const d = new Date(year, month - 1, day)
   return d.getDay() === 0
 }
 
 function Checkout() {
-  const { items, total, clearCart } = useCart()
+  const { items, total: cartTotal, clearCart } = useCart()
   const { user } = useAuth()
   const navigate = useNavigate()
 
   const [fulfillmentType, setFulfillmentType] = useState('PICKUP')
+  const [deliveryMethod, setDeliveryMethod] = useState('OWN_COURIER')
   const [pickupDate, setPickupDate] = useState('')
   const [pickupTime, setPickupTime] = useState('')
   const [deliveryAddress, setDeliveryAddress] = useState('')
@@ -45,6 +60,11 @@ function Checkout() {
 
   const today = new Date()
   const minDateStr = formatDateInput(today)
+
+  const deliveryFee = fulfillmentType === 'DELIVERY'
+    ? (DELIVERY_OPTIONS.find((o) => o.value === deliveryMethod)?.fee ?? 0)
+    : 0
+  const orderTotal = cartTotal + deliveryFee
 
   function handleDateChange(value: string) {
     setDateError('')
@@ -67,7 +87,7 @@ function Checkout() {
 
     for (let hour = OPEN_HOUR; hour <= CLOSE_HOUR; hour++) {
       for (const minute of [0, 30]) {
-        if (hour === CLOSE_HOUR && minute > 0) continue // don't go past 7:00 PM
+        if (hour === CLOSE_HOUR && minute > 0) continue
 
         if (isToday) {
           const slotTime = new Date()
@@ -93,6 +113,7 @@ function Checkout() {
         body: JSON.stringify({
           items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
           fulfillmentType,
+          deliveryMethod: fulfillmentType === 'DELIVERY' ? deliveryMethod : undefined,
           pickupDate: pickupDate || undefined,
           pickupTime: pickupTime || undefined,
           deliveryAddress: deliveryAddress || undefined,
@@ -147,9 +168,19 @@ function Checkout() {
             <span>₱{item.price * item.quantity}</span>
           </div>
         ))}
+        <div className="flex justify-between text-sm pt-2 border-t border-amber-200 text-gray-700">
+          <span>Subtotal</span>
+          <span>₱{cartTotal}</span>
+        </div>
+        {fulfillmentType === 'DELIVERY' && (
+          <div className="flex justify-between text-sm text-gray-700">
+            <span>Delivery Fee</span>
+            <span>₱{deliveryFee}</span>
+          </div>
+        )}
         <div className="flex justify-between font-bold mt-2 pt-2 border-t border-amber-200 text-amber-900">
           <span>Total</span>
-          <span>₱{total}</span>
+          <span>₱{orderTotal}</span>
         </div>
       </div>
 
@@ -165,6 +196,43 @@ function Checkout() {
             <option value="DELIVERY">Delivery</option>
           </select>
         </div>
+
+        {fulfillmentType === 'DELIVERY' && (
+          <div>
+            <label className="block text-sm font-medium mb-2 text-amber-900">
+              How would you like your delivery handled?
+            </label>
+            <div className="space-y-2">
+              {DELIVERY_OPTIONS.map((option) => {
+                const isSelected = deliveryMethod === option.value
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setDeliveryMethod(option.value)}
+                    className={`w-full text-left border-2 rounded-lg p-3 bg-white transition-colors ${
+                      isSelected ? 'border-amber-500 ring-2 ring-amber-200' : 'border-amber-200 hover:border-amber-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          isSelected ? 'border-amber-500' : 'border-gray-300'
+                        }`}
+                      >
+                        {isSelected && <span className="w-2 h-2 rounded-full bg-amber-500" />}
+                      </span>
+                      <span className="font-medium text-amber-900 text-sm">
+                        {option.label} {option.fee > 0 ? `(+₱${option.fee})` : '(₱0)'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600 ml-6">{option.description}</p>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium mb-1 text-amber-900">
@@ -204,16 +272,16 @@ function Checkout() {
         </div>
 
         {fulfillmentType === 'DELIVERY' && (
-  <div>
-    <label className="block text-sm font-medium mb-1 text-amber-900">Delivery Address</label>
-    <textarea
-      value={deliveryAddress}
-      onChange={(e) => setDeliveryAddress(e.target.value)}
-      className="w-full border border-amber-300 rounded px-3 py-2"
-      required
-    />
-  </div>
-)}
+          <div>
+            <label className="block text-sm font-medium mb-1 text-amber-900">Delivery Address</label>
+            <textarea
+              value={deliveryAddress}
+              onChange={(e) => setDeliveryAddress(e.target.value)}
+              className="w-full border border-amber-300 rounded px-3 py-2"
+              required
+            />
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium mb-1 text-amber-900">Order Notes (optional)</label>

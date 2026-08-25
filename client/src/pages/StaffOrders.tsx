@@ -22,6 +22,9 @@ interface Order {
   id: string
   orderNumber: string
   status: string
+  subtotal: string
+  deliveryMethod: string | null
+  deliveryFee: string
   total: string
   fulfillmentType: string
   pickupDate: string | null
@@ -48,6 +51,11 @@ const STATUS_LABELS: Record<string, string> = {
   READY: 'Ready',
   COMPLETED: 'Completed',
   CANCELLED: 'Cancelled',
+}
+
+const DELIVERY_METHOD_LABELS: Record<string, string> = {
+  OWN_COURIER: "Customer's own courier",
+  TEAM_DELIVERY: 'Team-handled delivery',
 }
 
 function StaffOrders() {
@@ -182,6 +190,30 @@ function StaffOrders() {
                         <span>₱{item.subtotal}</span>
                       </div>
                     ))}
+                    <div className="flex justify-between pt-1 mt-1 border-t border-amber-100">
+                      <span>Subtotal</span>
+                      <span>₱{order.subtotal}</span>
+                    </div>
+                    {order.fulfillmentType === 'DELIVERY' && (
+                      <>
+                        <div className="flex justify-between">
+                          <span>Delivery Method</span>
+                          <span>
+                            {order.deliveryMethod
+                              ? DELIVERY_METHOD_LABELS[order.deliveryMethod] || order.deliveryMethod
+                              : '—'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Delivery Fee</span>
+                          <span>₱{order.deliveryFee}</span>
+                        </div>
+                      </>
+                    )}
+                    <div className="flex justify-between font-medium text-amber-900">
+                      <span>Total</span>
+                      <span>₱{order.total}</span>
+                    </div>
                   </div>
 
                   <div className="pt-2 border-t border-amber-100">
