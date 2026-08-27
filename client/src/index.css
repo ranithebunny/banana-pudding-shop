@@ -1,5 +1,40 @@
 @import "tailwindcss";
 
+@theme {
+  --color-cream: #FFFBEA;
+  --color-cream-deep: #FDF3D7;
+  --color-card: #FFFFFF;
+  --color-espresso: #3D2817;
+  --color-espresso-soft: #6B5544;
+  --color-caramel: #E08423;
+  --color-caramel-dark: #C06A15;
+  --color-caramel-light: #FDEBD3;
+  --color-banana: #F5C518;
+  --color-banana-light: #FEF6DA;
+  --color-leaf: #4F7942;
+  --color-leaf-light: #E9F1E6;
+
+  --font-display: "Fraunces", serif;
+  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
 body {
-  background-color: #FFFBEB;
+  background-color: var(--color-cream);
+  color: var(--color-espresso);
+  font-family: var(--font-body);
+}
+
+/* Visible keyboard focus everywhere — accessibility floor */
+:focus-visible {
+  outline: 2px solid var(--color-caramel);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

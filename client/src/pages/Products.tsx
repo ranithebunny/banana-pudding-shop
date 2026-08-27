@@ -24,6 +24,38 @@ interface DisplayItem {
   variants: Product[]
 }
 
+function DollopWatermark() {
+  return (
+    <svg
+      width="220"
+      height="220"
+      viewBox="0 0 28 28"
+      fill="none"
+      aria-hidden="true"
+      className="absolute -top-6 -right-6 opacity-[0.08] pointer-events-none select-none hidden sm:block"
+    >
+      <path
+        d="M14 4C9 4 5.5 8 6.2 12.5C4 13.3 3 15.6 4.3 17.7C5.6 19.8 8.3 20.3 10.3 19C11.6 21.6 15.3 22.5 18 20.7C21.3 22 24.7 19.3 24 15.8C25.6 14.3 25.2 11.6 23.2 10.7C23.4 6.8 19 3.4 14.9 5.1C14.6 4.4 14.3 4 14 4Z"
+        fill="var(--color-espresso)"
+      />
+    </svg>
+  )
+}
+
+function ProductCardSkeleton() {
+  return (
+    <div className="bg-card rounded-2xl overflow-hidden shadow-sm border border-caramel-light/60 animate-pulse">
+      <div className="aspect-[4/3] bg-cream-deep" />
+      <div className="p-4 space-y-2">
+        <div className="h-3 w-16 bg-cream-deep rounded-full" />
+        <div className="h-5 w-3/4 bg-cream-deep rounded" />
+        <div className="h-3 w-full bg-cream-deep rounded" />
+        <div className="h-9 w-full bg-cream-deep rounded-full mt-3" />
+      </div>
+    </div>
+  )
+}
+
 function Products() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -31,6 +63,7 @@ function Products() {
   const [selectedVariant, setSelectedVariant] = useState<Record<string, string>>({})
   const [pendingItem, setPendingItem] = useState<{ id: string; name: string; price: number } | null>(null)
   const [selectedAddOnIds, setSelectedAddOnIds] = useState<string[]>([])
+  const [toastMsg, setToastMsg] = useState<string | null>(null)
   const { addItem } = useCart()
 
   useEffect(() => {
@@ -47,8 +80,33 @@ function Products() {
     loadProducts()
   }, [])
 
-  if (loading) return <div className="p-8">Loading menu...</div>
-  if (error) return <div className="p-8 text-red-600">{error}</div>
+  useEffect(() => {
+    if (!toastMsg) return
+    const timer = setTimeout(() => setToastMsg(null), 2200)
+    return () => clearTimeout(timer)
+  }, [toastMsg])
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+        <div className="h-8 w-56 bg-cream-deep rounded animate-pulse mb-8" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <ProductCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-16 text-center">
+        <p className="font-display text-lg text-espresso mb-1">The menu couldn't load.</p>
+        <p className="text-sm text-espresso-soft">{error}</p>
+      </div>
+    )
+  }
 
   const addOns = products.filter((p) => p.isAddOn)
   const regularProducts = products.filter((p) => !p.isAddOn)
@@ -97,6 +155,7 @@ function Products() {
       setSelectedAddOnIds([])
     } else {
       addItem({ id: product.id, name: cartName, price: Number(product.price) })
+      setToastMsg(`${cartName} added to cart`)
     }
   }
 
@@ -115,6 +174,7 @@ function Products() {
         addItem({ id: addOn.id, name: addOn.name, price: Number(addOn.price) })
       }
     }
+    setToastMsg(`${pendingItem.name} added to cart`)
     setPendingItem(null)
     setSelectedAddOnIds([])
   }
@@ -125,104 +185,161 @@ function Products() {
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-amber-900">Our Menu</h1>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {displayItems.map((item) => {
-          const selected = getSelectedProduct(item)
-          const outOfStock = selected.stock <= 0
-          return (
-            <div
-              key={item.key}
-              className={`bg-white border border-amber-200 rounded-lg p-4 shadow-sm ${outOfStock ? 'opacity-60' : ''}`}
-            >
-              <div className="relative">
-                {item.image && (
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className={`w-full h-40 object-cover rounded mb-3 ${outOfStock ? 'grayscale' : ''}`}
-                  />
-                )}
-                {outOfStock && (
-                  <span className="absolute top-2 left-2 bg-gray-800 text-white text-xs font-semibold px-2 py-1 rounded">
-                    OUT OF STOCK
-                  </span>
-                )}
-              </div>
-
-              <h2 className="font-semibold text-amber-900">{item.name}</h2>
-              {item.category && (
-                <p className="text-xs text-amber-600 mb-1">{item.category.name}</p>
-              )}
-              {item.description && (
-                <p className="text-sm text-gray-600 mb-2">{item.description}</p>
-              )}
-
-              {item.variants.length > 1 && (
-                <select
-                  value={selected.id}
-                  onChange={(e) =>
-                    setSelectedVariant((prev) => ({ ...prev, [item.key]: e.target.value }))
-                  }
-                  className="w-full border border-amber-300 rounded px-2 py-1.5 text-sm mb-2 bg-white"
-                >
-                  {item.variants.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.variantLabel}{v.stock <= 0 ? ' (Out of stock)' : ''}
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              <p className="font-bold mb-3 text-amber-900">₱{selected.price}</p>
-              <button
-                onClick={() => handleAddClick(item)}
-                disabled={outOfStock}
-                className="w-full bg-amber-500 hover:bg-amber-600 text-white rounded py-1.5 text-sm font-medium transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:bg-gray-300"
-              >
-                {outOfStock ? 'Out of Stock' : 'Add to Cart'}
-              </button>
-            </div>
-          )
-        })}
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
+      {/* Hero */}
+      <div className="relative overflow-hidden bg-cream-deep rounded-3xl px-6 sm:px-10 py-10 sm:py-14 mt-6 mb-10 text-center">
+        <DollopWatermark />
+        <p className="font-display italic text-espresso-soft text-base sm:text-lg mb-2 relative">
+          Made with love, one pudding at a time.
+        </p>
+        <h1 className="font-display text-3xl sm:text-4xl font-semibold text-espresso relative">
+          Pick your favorite flavor
+        </h1>
       </div>
 
+      {displayItems.length === 0 ? (
+        <div className="text-center py-20">
+          <p className="text-4xl mb-3">🍮</p>
+          <p className="font-display text-xl text-espresso mb-1">Nothing on the menu right now</p>
+          <p className="text-sm text-espresso-soft">Check back soon — we're mixing up something new.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {displayItems.map((item) => {
+            const selected = getSelectedProduct(item)
+            const outOfStock = selected.stock <= 0
+            return (
+              <div
+                key={item.key}
+                className={`group bg-card rounded-2xl overflow-hidden shadow-sm border border-caramel-light/60 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 ${
+                  outOfStock ? 'opacity-70' : ''
+                }`}
+              >
+                <div className="relative aspect-[4/3] overflow-hidden bg-cream-deep">
+                  {item.image && (
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className={`w-full h-full object-cover transition-transform duration-300 ${
+                        outOfStock ? 'grayscale' : 'group-hover:scale-105'
+                      }`}
+                    />
+                  )}
+                  {outOfStock && (
+                    <span className="absolute top-3 left-3 bg-espresso/90 text-cream text-[11px] font-semibold tracking-wide px-2.5 py-1 rounded-full">
+                      Out of stock
+                    </span>
+                  )}
+                </div>
+
+                <div className="p-4">
+                  {item.category && (
+                    <span className="inline-block bg-banana-light text-espresso-soft text-[11px] font-semibold px-2 py-0.5 rounded-full mb-1.5">
+                      {item.category.name}
+                    </span>
+                  )}
+
+                  <h2 className="font-display text-lg font-semibold text-espresso leading-tight">{item.name}</h2>
+
+                  {item.description && (
+                    <p className="text-sm text-espresso-soft mt-1 mb-3 line-clamp-2">{item.description}</p>
+                  )}
+
+                  {item.variants.length > 1 && (
+                    <div className="flex flex-wrap gap-1.5 mb-3" role="group" aria-label={`${item.name} flavor`}>
+                      {item.variants.map((v) => {
+                        const isSelected = selected.id === v.id
+                        const variantOut = v.stock <= 0
+                        return (
+                          <button
+                            key={v.id}
+                            type="button"
+                            disabled={variantOut}
+                            onClick={() => setSelectedVariant((prev) => ({ ...prev, [item.key]: v.id }))}
+                            className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition-colors ${
+                              variantOut
+                                ? 'border-caramel-light text-espresso-soft/40 line-through cursor-not-allowed'
+                                : isSelected
+                                ? 'bg-caramel border-caramel text-white'
+                                : 'border-caramel-light text-espresso-soft hover:border-caramel'
+                            }`}
+                          >
+                            {v.variantLabel}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between mb-3 mt-1">
+                    <p className="font-display text-xl font-bold text-espresso">₱{selected.price}</p>
+                  </div>
+
+                  <button
+                    onClick={() => handleAddClick(item)}
+                    disabled={outOfStock}
+                    className="w-full bg-caramel hover:bg-caramel-dark text-white rounded-full py-2.5 text-sm font-semibold shadow-sm hover:shadow-md active:scale-[0.98] transition-all disabled:bg-cream-deep disabled:text-espresso-soft/50 disabled:shadow-none disabled:cursor-not-allowed disabled:active:scale-100"
+                  >
+                    {outOfStock ? 'Out of Stock' : 'Add to Cart'}
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
       {pendingItem && addOns.length > 0 && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full relative">
+        <div className="fixed inset-0 bg-espresso/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-card rounded-3xl p-6 max-w-sm w-full relative shadow-xl">
             <button
               onClick={closeModal}
-              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl leading-none"
+              className="absolute top-4 right-4 text-espresso-soft hover:text-espresso text-xl leading-none"
               aria-label="Close"
             >
               ×
             </button>
-            <p className="font-medium text-amber-900 mb-3">Add any extras?</p>
+            <p className="font-display text-lg font-semibold text-espresso mb-4">Add any extras?</p>
 
-            <div className="space-y-2 mb-4">
+            <div className="space-y-2.5 mb-5">
               {addOns.map((addOn) => (
-                <label key={addOn.id} className="flex items-center gap-2 text-sm text-amber-900">
+                <label
+                  key={addOn.id}
+                  className="flex items-center gap-3 text-sm text-espresso bg-cream rounded-xl px-3 py-2.5 cursor-pointer hover:bg-cream-deep transition-colors"
+                >
                   <input
                     type="checkbox"
                     checked={selectedAddOnIds.includes(addOn.id)}
                     onChange={() => toggleAddOn(addOn.id)}
+                    className="w-4 h-4 accent-caramel"
                   />
-                  {addOn.name} (+₱{addOn.price})
+                  <span className="flex-1">{addOn.name}</span>
+                  <span className="text-espresso-soft font-medium">+₱{addOn.price}</span>
                 </label>
               ))}
             </div>
 
             <button
               onClick={confirmAdd}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-white rounded py-2 text-sm font-medium transition-colors"
+              className="w-full bg-caramel hover:bg-caramel-dark text-white rounded-full py-2.5 text-sm font-semibold shadow-sm hover:shadow-md active:scale-[0.98] transition-all"
             >
               Add to Cart
             </button>
           </div>
         </div>
       )}
+
+      {/* Toast */}
+      <div
+        className={`fixed bottom-6 left-1/2 -translate-x-1/2 sm:left-auto sm:right-6 sm:translate-x-0 z-50 transition-all duration-300 ${
+          toastMsg ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'
+        }`}
+      >
+        <div className="bg-espresso text-cream text-sm font-medium rounded-full px-4 py-2.5 shadow-lg flex items-center gap-2 whitespace-nowrap">
+          <span className="text-banana">✓</span>
+          {toastMsg}
+        </div>
+      </div>
     </div>
   )
 }

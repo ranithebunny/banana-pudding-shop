@@ -8,6 +8,7 @@ interface OrderItem {
   quantity: number
   unitPrice: string
   subtotal: string
+  discountedQuantity: number
 }
 
 interface Payment {
@@ -20,6 +21,7 @@ interface Order {
   orderNumber: string
   status: string
   subtotal: string
+  discount: string
   deliveryMethod: string | null
   deliveryFee: string
   total: string
@@ -65,6 +67,9 @@ function OrderDetail() {
   const orderAgeHours = (Date.now() - new Date(order.createdAt).getTime()) / (1000 * 60 * 60)
   const wasLikelyAutoCancelled = order.status === 'CANCELLED' && orderAgeHours >= 24 && !order.payment
 
+  const discountAmount = Number(order.discount)
+  const hasStaffDiscount = discountAmount > 0
+
   return (
     <div className="p-8 max-w-lg mx-auto">
       <h1 className="text-2xl font-bold mb-1 text-amber-900">Order {order.orderNumber}</h1>
@@ -86,10 +91,23 @@ function OrderDetail() {
         </div>
       )}
 
+      {hasStaffDiscount && (
+        <div className="bg-green-50 border border-green-300 rounded-lg p-4 mb-6 text-sm text-green-800 font-medium">
+          Staff Discount Applied — you saved ₱{discountAmount.toFixed(2)} on this order.
+        </div>
+      )}
+
       <div className="bg-white border border-amber-200 rounded-lg p-4 mb-6">
         {order.items.map((item) => (
           <div key={item.id} className="flex justify-between text-sm mb-1">
-            <span>{item.productName} × {item.quantity}</span>
+            <span>
+              {item.productName} × {item.quantity}
+              {item.discountedQuantity > 0 && (
+                <span className="text-xs text-green-700 ml-1">
+                  ({item.discountedQuantity} @ 20% off)
+                </span>
+              )}
+            </span>
             <span>₱{item.subtotal}</span>
           </div>
         ))}
@@ -97,6 +115,12 @@ function OrderDetail() {
           <span>Subtotal</span>
           <span>₱{order.subtotal}</span>
         </div>
+        {hasStaffDiscount && (
+          <div className="flex justify-between text-sm text-green-700">
+            <span>Staff Discount</span>
+            <span>−₱{discountAmount.toFixed(2)}</span>
+          </div>
+        )}
         {order.fulfillmentType === 'DELIVERY' && (
           <>
             <div className="flex justify-between text-sm text-gray-700">

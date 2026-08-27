@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import { authenticate, authorize } from '../middleware/auth';
 import { logAction } from '../lib/auditLog';
 import { getCurrentStock } from '../lib/inventory';
+import { getDiscountedTubsUsedToday, applyStaffDiscount } from '../lib/staffDiscount';
 
 const router = Router();
 
@@ -51,19 +52,57 @@ router.post('/', authenticate, async (req, res) => {
       }
     }
 
+    const isStaff = req.user!.role === 'STAFF';
+
+    let discountBreakdown = null;
+    if (isStaff) {
+      const tubsUsedToday = await getDiscountedTubsUsedToday(req.user!.userId);
+      discountBreakdown = applyStaffDiscount(
+        items.map((item: { productId: string; quantity: number }) => {
+          const product = products.find((p) => p.id === item.productId)!;
+          return {
+            productId: product.id,
+            productName: product.name,
+            unitPrice: Number(product.price),
+            quantity: item.quantity,
+          };
+        }),
+        tubsUsedToday
+      );
+    }
+
     let subtotal = 0;
+    let totalDiscount = 0;
     const orderItemsData = items.map((item: { productId: string; quantity: number }) => {
       const product = products.find((p) => p.id === item.productId)!;
       const unitPrice = Number(product.price);
+
+      if (isStaff && discountBreakdown) {
+        const discountedItem = discountBreakdown.items.find(
+          (i: { productId: string }) => i.productId === product.id
+        )!;
+        subtotal += discountedItem.lineTotal;
+        totalDiscount += (unitPrice * item.quantity) - discountedItem.lineTotal;
+
+        return {
+          productId: product.id,
+          productName: product.name,
+          quantity: item.quantity,
+          unitPrice: product.price,
+          subtotal: discountedItem.lineTotal,
+          discountedQuantity: discountedItem.discountedQuantity,
+        };
+      }
+
       const itemSubtotal = unitPrice * item.quantity;
       subtotal += itemSubtotal;
-
       return {
         productId: product.id,
         productName: product.name,
         quantity: item.quantity,
         unitPrice: product.price,
         subtotal: itemSubtotal,
+        discountedQuantity: 0,
       };
     });
 
@@ -77,6 +116,7 @@ router.post('/', authenticate, async (req, res) => {
         orderNumber,
         customerId: req.user!.userId,
         subtotal,
+        discount: totalDiscount,
         deliveryMethod: fulfillmentType === 'DELIVERY' ? deliveryMethod : null,
         deliveryFee,
         total,
@@ -92,7 +132,15 @@ router.post('/', authenticate, async (req, res) => {
       include: { items: true },
     });
 
-    res.status(201).json(order);
+    res.status(201).json({
+      ...order,
+      staffDiscount: isStaff && discountBreakdown ? {
+        applied: discountBreakdown.totalDiscountedTubsThisOrder > 0,
+        discountedTubsThisOrder: discountBreakdown.totalDiscountedTubsThisOrder,
+        dailyLimitReached: discountBreakdown.dailyLimitReached,
+        tubsRemainingToday: discountBreakdown.tubsRemainingToday,
+      } : null,
+    });
   } catch (error) {
     console.error('Create order error:', error);
     res.status(500).json({ error: 'Something went wrong.' });
@@ -131,7 +179,49 @@ router.get('/staff/all', authenticate, authorize('STAFF', 'OWNER'), async (req, 
     res.status(500).json({ error: 'Something went wrong.' });
   }
 });
+// POST /api/orders/preview — staff-only: preview discount breakdown before checkout (no order created)
+router.post('/preview', authenticate, async (req, res) => {
+  try {
+    const { items } = req.body;
 
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Cart is empty.' });
+    }
+
+    if (req.user!.role !== 'STAFF') {
+      return res.json({ isStaff: false });
+    }
+
+    const productIds = items.map((item: { productId: string }) => item.productId);
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds }, isActive: true },
+    });
+
+    const tubsUsedToday = await getDiscountedTubsUsedToday(req.user!.userId);
+
+    const breakdown = applyStaffDiscount(
+      items.map((item: { productId: string; quantity: number }) => {
+        const product = products.find((p) => p.id === item.productId)!;
+        return {
+          productId: product.id,
+          productName: product.name,
+          unitPrice: Number(product.price),
+          quantity: item.quantity,
+        };
+      }),
+      tubsUsedToday
+    );
+
+    res.json({
+      isStaff: true,
+      tubsUsedToday,
+      ...breakdown,
+    });
+  } catch (error) {
+    console.error('Preview discount error:', error);
+    res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
 // GET /api/orders/:id — one order (only its owner can view it)
 router.get('/:id', authenticate, async (req, res) => {
   try {
@@ -238,5 +328,6 @@ router.delete('/:id', authenticate, authorize('OWNER'), async (req, res) => {
     res.status(500).json({ error: 'Something went wrong.' });
   }
 });
+
 
 export default router;

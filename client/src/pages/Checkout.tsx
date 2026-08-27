@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
@@ -21,6 +21,27 @@ const DELIVERY_OPTIONS = [
     fee: 150,
   },
 ]
+
+interface DiscountedItem {
+  productId: string
+  productName: string
+  quantity: number
+  discountedQuantity: number
+  regularQuantity: number
+  unitPrice: number
+  discountedUnitPrice: number
+  lineTotal: number
+}
+
+interface PreviewResponse {
+  isStaff: boolean
+  tubsUsedToday?: number
+  items?: DiscountedItem[]
+  total?: number
+  totalDiscountedTubsThisOrder?: number
+  dailyLimitReached?: boolean
+  tubsRemainingToday?: number
+}
 
 function formatDateInput(d: Date) {
   const year = d.getFullYear()
@@ -57,14 +78,44 @@ function Checkout() {
   const [error, setError] = useState('')
   const [dateError, setDateError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [preview, setPreview] = useState<PreviewResponse | null>(null)
 
   const today = new Date()
   const minDateStr = formatDateInput(today)
 
+  useEffect(() => {
+    if (items.length === 0) {
+      setPreview(null)
+      return
+    }
+
+    let cancelled = false
+
+    apiFetch('/orders/preview', {
+      method: 'POST',
+      body: JSON.stringify({
+        items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+      }),
+    })
+      .then((data: PreviewResponse) => {
+        if (!cancelled) setPreview(data)
+      })
+      .catch(() => {
+        if (!cancelled) setPreview(null)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [items])
+
+  const isStaff = preview?.isStaff === true
+  const discountedSubtotal = isStaff && preview?.total !== undefined ? preview.total : cartTotal
+
   const deliveryFee = fulfillmentType === 'DELIVERY'
     ? (DELIVERY_OPTIONS.find((o) => o.value === deliveryMethod)?.fee ?? 0)
     : 0
-  const orderTotal = cartTotal + deliveryFee
+  const orderTotal = discountedSubtotal + deliveryFee
 
   function handleDateChange(value: string) {
     setDateError('')
@@ -162,15 +213,40 @@ function Checkout() {
       <h1 className="text-2xl font-bold mb-6 text-amber-900">Checkout</h1>
 
       <div className="mb-6 bg-white border border-amber-200 rounded-lg p-4">
-        {items.map((item) => (
-          <div key={item.productId} className="flex justify-between text-sm mb-1 text-gray-700">
-            <span>{item.name} × {item.quantity}</span>
-            <span>₱{item.price * item.quantity}</span>
+        {isStaff && preview?.totalDiscountedTubsThisOrder! > 0 && (
+          <div className="mb-3 bg-green-50 border border-green-300 text-green-800 rounded px-3 py-2 text-sm font-medium">
+            Staff Discount Applied
           </div>
-        ))}
+        )}
+        {isStaff && preview?.dailyLimitReached && (
+          <div className="mb-3 bg-amber-50 border border-amber-300 text-amber-800 rounded px-3 py-2 text-sm">
+            <p className="font-medium">Daily Staff Discount Limit Reached</p>
+            <p>You've used your 3 discounted tubs for today. Additional tubs will be charged at regular price.</p>
+          </div>
+        )}
+
+        {items.map((item) => {
+          const breakdown = preview?.items?.find((i) => i.productId === item.productId)
+          const lineTotal = isStaff && breakdown ? breakdown.lineTotal : item.price * item.quantity
+
+          return (
+            <div key={item.productId} className="flex justify-between text-sm mb-1 text-gray-700">
+              <span>
+                {item.name} × {item.quantity}
+                {isStaff && breakdown && breakdown.discountedQuantity > 0 && (
+                  <span className="text-xs text-green-700 ml-1">
+                    ({breakdown.discountedQuantity} @ 20% off)
+                  </span>
+                )}
+              </span>
+              <span>₱{lineTotal.toFixed(2)}</span>
+            </div>
+          )
+        })}
+
         <div className="flex justify-between text-sm pt-2 border-t border-amber-200 text-gray-700">
           <span>Subtotal</span>
-          <span>₱{cartTotal}</span>
+          <span>₱{discountedSubtotal.toFixed(2)}</span>
         </div>
         {fulfillmentType === 'DELIVERY' && (
           <div className="flex justify-between text-sm text-gray-700">
@@ -180,7 +256,7 @@ function Checkout() {
         )}
         <div className="flex justify-between font-bold mt-2 pt-2 border-t border-amber-200 text-amber-900">
           <span>Total</span>
-          <span>₱{orderTotal}</span>
+          <span>₱{orderTotal.toFixed(2)}</span>
         </div>
       </div>
 

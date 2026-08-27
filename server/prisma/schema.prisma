@@ -98,15 +98,16 @@ model Order {
 }
 
 model OrderItem {
-  id          String   @id @default(uuid())
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id])
-  productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  productName String
-  quantity    Int
-  unitPrice   Decimal  @db.Decimal(10, 2)
-  subtotal    Decimal  @db.Decimal(10, 2)
+  id                  String   @id @default(uuid())
+  orderId             String
+  order               Order    @relation(fields: [orderId], references: [id])
+  productId           String
+  product             Product  @relation(fields: [productId], references: [id])
+  productName         String
+  quantity            Int
+  unitPrice           Decimal  @db.Decimal(10, 2)
+  subtotal            Decimal  @db.Decimal(10, 2)
+  discountedQuantity  Int      @default(0)
 }
 
 enum PaymentMethod {
