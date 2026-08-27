@@ -341,26 +341,17 @@ Contributions are welcome! Please follow these steps:
 
 ## 📝 License
 
-This project is licensed under the ISC License - see LICENSE file for details.
-
----
-
-## 📞 Support
-
-For issues or questions:
-- Open an issue on [GitHub](https://github.com/ranithebunny/banana-pudding-shop/issues)
-- Contact: ranithebunny
+This project is licensed under the MIT License - see LICENSE file for details.
 
 ---
 
 ## 🎯 Future Enhancements
 
 - [ ] Email notifications for orders
-- [ ] SMS payment reminders
 - [ ] Advanced inventory analytics
 - [ ] Multi-payment gateway support
 - [ ] Customer reviews and ratings
-- [ ] Promotional codes and discounts
+- [ ] Promotional codes and discounts for customers
 
 ---
 
