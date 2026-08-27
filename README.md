@@ -25,32 +25,32 @@ A full-stack e-commerce platform for managing and selling banana pudding product
 ## ✨ Features
 
 ### Customer Features
-- 🛍️ Browse products by category
-- 🛒 Add/remove items from cart
-- 💳 Checkout and place orders
-- �� Upload payment proof
-- 📦 Track order status
-- 📜 View order history
+- Browse products by category
+- Add/remove items from cart
+- Checkout and place orders
+- Upload payment proof
+- Track order status
+- View order history
 
 ### Staff Features
-- 💼 View and manage orders
-- 💸 Process payment uploads
-- 📊 Manage inventory levels
-- 📋 Dashboard with analytics
+- View and manage orders
+- Process payment uploads
+- Manage inventory levels
+- Dashboard with analytics
 
 ### Owner Features
-- 👑 Full admin access
-- 💰 Track business expenses
-- 📝 View detailed audit logs
-- 📊 View dashboard reports
-- 🔐 Monitor all system activities
+- Full admin access
+- Track business expenses
+- View detailed audit logs
+- View dashboard reports
+- Monitor all system activities
 
 ### System Features
-- 🔐 Secure user authentication (JWT + bcrypt)
-- ⏰ Automatic order expiration (scheduled tasks)
-- 🔄 CORS-enabled API
-- 📊 Comprehensive audit logging
-- 👥 Role-based access control
+- Secure user authentication (JWT + bcrypt)
+- Automatic order expiration (scheduled tasks)
+- CORS-enabled API
+- Comprehensive audit logging
+- Role-based access control
 
 ---
 
