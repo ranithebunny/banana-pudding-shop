@@ -15,6 +15,7 @@ A full-stack e-commerce platform for managing and selling banana pudding product
 - [Installation](#-installation)
 - [Environment Setup](#-environment-setup)
 - [Running the Application](#-running-the-application)
+- [Demo Credentials](#-demo-credentials)
 - [API Endpoints](#-api-endpoints)
 - [User Roles](#-user-roles)
 - [Database Schema](#-database-schema)
@@ -228,6 +229,20 @@ cd server
 npm run build
 npm start
 ```
+
+---
+
+## 🧪 Demo Credentials
+
+Use these credentials to test different user roles in the application:
+
+| Role | Email | Password |
+|------|-------|----------|
+| **Customer** | customer@example.com | password123 |
+| **Staff** | staff@bananapudding.com | password123 |
+| **Owner** | owner@bananapudding.com | password123 |
+
+> **Note:** These credentials are for demo and testing purposes only. Always use secure, unique passwords in production environments.
 
 ---
 
