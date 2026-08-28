@@ -182,24 +182,28 @@ function Checkout() {
   }
 
   if (items.length === 0) {
-    return <div className="p-8 text-center text-gray-600">Your cart is empty.</div>
+    return (
+      <div className="max-w-lg mx-auto px-4 py-20 text-center">
+        <p className="text-espresso-soft">Your cart is empty.</p>
+      </div>
+    )
   }
 
   if (!user) {
     return (
-      <div className="p-8 max-w-md mx-auto text-center">
-        <h1 className="text-2xl font-bold mb-3 text-amber-900">Sign up or log in to checkout</h1>
-        <p className="text-gray-600 mb-6">You'll need an account to place an order and track it.</p>
+      <div className="max-w-md mx-auto px-4 py-20 text-center">
+        <h1 className="font-display text-2xl font-semibold text-espresso mb-2">Sign up or log in to checkout</h1>
+        <p className="text-espresso-soft mb-6">You'll need an account to place an order and track it.</p>
         <div className="flex gap-3 justify-center">
           <Link
             to="/login"
-            className="bg-amber-500 hover:bg-amber-600 text-white rounded px-6 py-2 font-medium transition-colors"
+            className="bg-caramel hover:bg-caramel-dark text-white rounded-full px-6 py-2.5 font-semibold shadow-sm hover:shadow-md active:scale-[0.98] transition-all"
           >
             Log in
           </Link>
           <Link
             to="/register"
-            className="border border-amber-300 text-amber-900 rounded px-6 py-2 font-medium"
+            className="border border-caramel-light text-espresso rounded-full px-6 py-2.5 font-semibold hover:bg-cream-deep transition-colors"
           >
             Register
           </Link>
@@ -209,19 +213,19 @@ function Checkout() {
   }
 
   return (
-    <div className="p-8 max-w-lg mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-amber-900">Checkout</h1>
+    <div className="max-w-lg mx-auto px-4 sm:px-6 py-8">
+      <h1 className="font-display text-3xl font-semibold text-espresso mb-6">Checkout</h1>
 
-      <div className="mb-6 bg-white border border-amber-200 rounded-lg p-4">
+      <div className="mb-6 bg-card border border-caramel-light/60 rounded-2xl p-5 shadow-sm">
         {isStaff && preview?.totalDiscountedTubsThisOrder! > 0 && (
-          <div className="mb-3 bg-green-50 border border-green-300 text-green-800 rounded px-3 py-2 text-sm font-medium">
-            Staff Discount Applied
+          <div className="mb-3 bg-leaf-light border border-leaf/30 text-leaf rounded-xl px-3 py-2.5 text-sm font-semibold">
+            ✓ Staff Discount Applied
           </div>
         )}
         {isStaff && preview?.dailyLimitReached && (
-          <div className="mb-3 bg-amber-50 border border-amber-300 text-amber-800 rounded px-3 py-2 text-sm">
-            <p className="font-medium">Daily Staff Discount Limit Reached</p>
-            <p>You've used your 3 discounted tubs for today. Additional tubs will be charged at regular price.</p>
+          <div className="mb-3 bg-banana-light border border-banana/40 text-espresso rounded-xl px-3 py-2.5 text-sm">
+            <p className="font-semibold">Daily Staff Discount Limit Reached</p>
+            <p className="text-espresso-soft mt-0.5">You've used your 3 discounted tubs for today. Additional tubs will be charged at regular price.</p>
           </div>
         )}
 
@@ -230,43 +234,43 @@ function Checkout() {
           const lineTotal = isStaff && breakdown ? breakdown.lineTotal : item.price * item.quantity
 
           return (
-            <div key={item.productId} className="flex justify-between text-sm mb-1 text-gray-700">
+            <div key={item.productId} className="flex justify-between text-sm mb-1.5 text-espresso">
               <span>
                 {item.name} × {item.quantity}
                 {isStaff && breakdown && breakdown.discountedQuantity > 0 && (
-                  <span className="text-xs text-green-700 ml-1">
+                  <span className="text-xs text-leaf font-medium ml-1.5">
                     ({breakdown.discountedQuantity} @ 20% off)
                   </span>
                 )}
               </span>
-              <span>₱{lineTotal.toFixed(2)}</span>
+              <span className="font-medium">₱{lineTotal.toFixed(2)}</span>
             </div>
           )
         })}
 
-        <div className="flex justify-between text-sm pt-2 border-t border-amber-200 text-gray-700">
+        <div className="flex justify-between text-sm pt-3 mt-2 border-t border-caramel-light/60 text-espresso-soft">
           <span>Subtotal</span>
           <span>₱{discountedSubtotal.toFixed(2)}</span>
         </div>
         {fulfillmentType === 'DELIVERY' && (
-          <div className="flex justify-between text-sm text-gray-700">
+          <div className="flex justify-between text-sm text-espresso-soft mt-1">
             <span>Delivery Fee</span>
             <span>₱{deliveryFee}</span>
           </div>
         )}
-        <div className="flex justify-between font-bold mt-2 pt-2 border-t border-amber-200 text-amber-900">
-          <span>Total</span>
+        <div className="flex justify-between items-center font-display font-bold text-xl mt-3 pt-3 border-t border-caramel-light/60 text-espresso">
+          <span className="text-sm font-body font-semibold text-espresso-soft">Total</span>
           <span>₱{orderTotal.toFixed(2)}</span>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="block text-sm font-medium mb-1 text-amber-900">Pickup or Delivery</label>
+          <label className="block text-sm font-semibold mb-1.5 text-espresso">Pickup or Delivery</label>
           <select
             value={fulfillmentType}
             onChange={(e) => setFulfillmentType(e.target.value)}
-            className="w-full border border-amber-300 rounded px-3 py-2 bg-white"
+            className="w-full border border-caramel-light rounded-xl px-3 py-2.5 bg-card text-espresso focus:outline-none focus:ring-2 focus:ring-caramel/40"
           >
             <option value="PICKUP">Pickup</option>
             <option value="DELIVERY">Delivery</option>
@@ -275,7 +279,7 @@ function Checkout() {
 
         {fulfillmentType === 'DELIVERY' && (
           <div>
-            <label className="block text-sm font-medium mb-2 text-amber-900">
+            <label className="block text-sm font-semibold mb-2 text-espresso">
               How would you like your delivery handled?
             </label>
             <div className="space-y-2">
@@ -286,23 +290,23 @@ function Checkout() {
                     key={option.value}
                     type="button"
                     onClick={() => setDeliveryMethod(option.value)}
-                    className={`w-full text-left border-2 rounded-lg p-3 bg-white transition-colors ${
-                      isSelected ? 'border-amber-500 ring-2 ring-amber-200' : 'border-amber-200 hover:border-amber-300'
+                    className={`w-full text-left border-2 rounded-2xl p-3.5 bg-card transition-colors ${
+                      isSelected ? 'border-caramel ring-2 ring-caramel/15' : 'border-caramel-light hover:border-caramel/50'
                     }`}
                   >
                     <div className="flex items-center gap-2 mb-1">
                       <span
                         className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                          isSelected ? 'border-amber-500' : 'border-gray-300'
+                          isSelected ? 'border-caramel' : 'border-espresso-soft/30'
                         }`}
                       >
-                        {isSelected && <span className="w-2 h-2 rounded-full bg-amber-500" />}
+                        {isSelected && <span className="w-2 h-2 rounded-full bg-caramel" />}
                       </span>
-                      <span className="font-medium text-amber-900 text-sm">
+                      <span className="font-semibold text-espresso text-sm">
                         {option.label} {option.fee > 0 ? `(+₱${option.fee})` : '(₱0)'}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-600 ml-6">{option.description}</p>
+                    <p className="text-xs text-espresso-soft ml-6">{option.description}</p>
                   </button>
                 )
               })}
@@ -311,7 +315,7 @@ function Checkout() {
         )}
 
         <div>
-          <label className="block text-sm font-medium mb-1 text-amber-900">
+          <label className="block text-sm font-semibold mb-1.5 text-espresso">
             {fulfillmentType === 'PICKUP' ? 'Pickup Date' : 'Delivery Date'}
           </label>
           <input
@@ -319,20 +323,20 @@ function Checkout() {
             value={pickupDate}
             min={minDateStr}
             onChange={(e) => handleDateChange(e.target.value)}
-            className="w-full border border-amber-300 rounded px-3 py-2"
+            className="w-full border border-caramel-light rounded-xl px-3 py-2.5 bg-card text-espresso focus:outline-none focus:ring-2 focus:ring-caramel/40"
             required
           />
-          <p className="text-xs text-gray-500 mt-1">Open daily 9:00 AM–7:00 PM. Closed Sundays.</p>
+          <p className="text-xs text-espresso-soft mt-1.5">Open daily 9:00 AM–7:00 PM. Closed Sundays.</p>
           {dateError && <p className="text-red-600 text-sm mt-1">{dateError}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1 text-amber-900">Preferred Time</label>
+          <label className="block text-sm font-semibold mb-1.5 text-espresso">Preferred Time</label>
           <select
             value={pickupTime}
             onChange={(e) => setPickupTime(e.target.value)}
             disabled={!pickupDate}
-            className="w-full border border-amber-300 rounded px-3 py-2 bg-white disabled:bg-gray-100 disabled:text-gray-400"
+            className="w-full border border-caramel-light rounded-xl px-3 py-2.5 bg-card text-espresso focus:outline-none focus:ring-2 focus:ring-caramel/40 disabled:bg-cream-deep disabled:text-espresso-soft/50"
             required
           >
             <option value="">
@@ -349,27 +353,27 @@ function Checkout() {
 
         {fulfillmentType === 'DELIVERY' && (
           <div>
-            <label className="block text-sm font-medium mb-1 text-amber-900">Delivery Address</label>
+            <label className="block text-sm font-semibold mb-1.5 text-espresso">Delivery Address</label>
             <textarea
               value={deliveryAddress}
               onChange={(e) => setDeliveryAddress(e.target.value)}
-              className="w-full border border-amber-300 rounded px-3 py-2"
+              className="w-full border border-caramel-light rounded-xl px-3 py-2.5 bg-card text-espresso focus:outline-none focus:ring-2 focus:ring-caramel/40"
               required
             />
           </div>
         )}
 
         <div>
-          <label className="block text-sm font-medium mb-1 text-amber-900">Order Notes (optional)</label>
+          <label className="block text-sm font-semibold mb-1.5 text-espresso">Order Notes (optional)</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="w-full border border-amber-300 rounded px-3 py-2"
+            className="w-full border border-caramel-light rounded-xl px-3 py-2.5 bg-card text-espresso focus:outline-none focus:ring-2 focus:ring-caramel/40"
           />
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-800">
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-800">
             {error}
           </div>
         )}
@@ -377,7 +381,7 @@ function Checkout() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-amber-500 hover:bg-amber-600 text-white rounded py-2 font-medium disabled:opacity-50 transition-colors"
+          className="w-full bg-caramel hover:bg-caramel-dark text-white rounded-full py-3.5 font-semibold shadow-sm hover:shadow-md active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100"
         >
           {loading ? 'Placing order...' : 'Place Order'}
         </button>

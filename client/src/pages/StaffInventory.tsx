@@ -7,6 +7,18 @@ interface StockItem {
   stock: number
 }
 
+function InventoryRowSkeleton() {
+  return (
+    <div className="bg-card border border-caramel-light/60 rounded-2xl p-4 animate-pulse flex items-center justify-between">
+      <div>
+        <div className="h-4 w-32 bg-cream-deep rounded mb-2" />
+        <div className="h-3 w-20 bg-cream-deep rounded" />
+      </div>
+      <div className="h-8 w-20 bg-cream-deep rounded-full" />
+    </div>
+  )
+}
+
 function StaffInventory() {
   const [items, setItems] = useState<StockItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,58 +63,83 @@ function StaffInventory() {
     }
   }
 
-  if (loading) return <div className="p-8">Loading inventory...</div>
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+        <div className="h-8 w-32 bg-cream-deep rounded animate-pulse mb-6" />
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => <InventoryRowSkeleton key={i} />)}
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Inventory</h1>
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+      <h1 className="font-display text-3xl font-semibold text-espresso mb-6">Inventory</h1>
 
-      {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-800 mb-4">
+          {error}
+        </div>
+      )}
 
       <div className="space-y-3">
-        {items.map((item) => (
-          <div key={item.productId} className="border rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">{item.productName}</p>
-                <p className={`text-sm ${item.stock <= 5 ? 'text-red-600' : 'text-gray-600'}`}>
-                  Stock: {item.stock} {item.stock <= 5 && '(Low)'}
-                </p>
-              </div>
-              <button
-                onClick={() => setRestockingId(restockingId === item.productId ? null : item.productId)}
-                className="bg-blue-600 text-white rounded px-4 py-1.5 text-sm font-medium"
-              >
-                Restock
-              </button>
-            </div>
-
-            {restockingId === item.productId && (
-              <div className="mt-3 flex gap-2">
-                <input
-                  type="number"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  placeholder="Quantity"
-                  className="w-24 border rounded px-3 py-1.5 text-sm"
-                />
-                <input
-                  type="text"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="Reason (optional)"
-                  className="flex-1 border rounded px-3 py-1.5 text-sm"
-                />
+        {items.map((item) => {
+          const isLow = item.stock <= 5
+          const isRestocking = restockingId === item.productId
+          return (
+            <div
+              key={item.productId}
+              className="bg-card border border-caramel-light/60 rounded-2xl p-4 shadow-sm"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-display font-semibold text-espresso truncate">{item.productName}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-sm text-espresso-soft">Stock: {item.stock}</span>
+                    {isLow && (
+                      <span className="text-[11px] font-semibold bg-red-50 text-red-700 px-2 py-0.5 rounded-full">
+                        Low
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <button
-                  onClick={() => handleRestock(item.productId)}
-                  className="bg-green-600 text-white rounded px-4 py-1.5 text-sm"
+                  onClick={() => setRestockingId(isRestocking ? null : item.productId)}
+                  className="shrink-0 bg-caramel hover:bg-caramel-dark text-white rounded-full px-4 py-1.5 text-sm font-semibold transition-colors"
                 >
-                  Confirm
+                  {isRestocking ? 'Cancel' : 'Restock'}
                 </button>
               </div>
-            )}
-          </div>
-        ))}
+
+              {isRestocking && (
+                <div className="mt-3 pt-3 border-t border-caramel-light/60 flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    placeholder="Quantity"
+                    className="w-full sm:w-24 border border-caramel-light rounded-xl px-3 py-2 text-sm bg-cream focus:outline-none focus:ring-2 focus:ring-caramel/40"
+                  />
+                  <input
+                    type="text"
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder="Reason (optional)"
+                    className="flex-1 border border-caramel-light rounded-xl px-3 py-2 text-sm bg-cream focus:outline-none focus:ring-2 focus:ring-caramel/40"
+                  />
+                  <button
+                    onClick={() => handleRestock(item.productId)}
+                    className="bg-leaf hover:opacity-90 text-white rounded-xl px-4 py-2 text-sm font-semibold transition-opacity"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
@@ -19,11 +19,28 @@ const PAYMENT_METHODS = [
 function PaymentUpload() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [paymentMethod, setPaymentMethod] = useState('GCASH')
   const [file, setFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  function setSelectedFile(selected: File | null) {
+    setFile(selected)
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewUrl(selected ? URL.createObjectURL(selected) : null)
+    if (selected) setError('')
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setIsDragging(false)
+    const dropped = e.dataTransfer.files?.[0]
+    if (dropped) setSelectedFile(dropped)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -63,12 +80,15 @@ function PaymentUpload() {
   }
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-amber-900">Submit Payment</h1>
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+      <h1 className="font-display text-3xl font-semibold text-espresso mb-1">Submit Payment</h1>
+      <p className="text-sm text-espresso-soft mb-6">
+        Scan to pay, then upload a screenshot of your receipt below.
+      </p>
 
-      <p className="text-sm font-medium text-amber-900 mb-3">Choose your payment method and scan to pay</p>
+      <p className="text-sm font-semibold text-espresso mb-3">1. Choose your payment method</p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         {PAYMENT_METHODS.map((method) => {
           const isSelected = paymentMethod === method.value
           return (
@@ -76,21 +96,21 @@ function PaymentUpload() {
               key={method.value}
               type="button"
               onClick={() => setPaymentMethod(method.value)}
-              className={`text-left border-2 rounded-lg p-4 bg-white transition-colors ${
-                isSelected ? 'border-amber-500 ring-2 ring-amber-200' : 'border-amber-200 hover:border-amber-300'
+              className={`text-left border-2 rounded-2xl p-4 bg-card transition-colors ${
+                isSelected ? 'border-caramel ring-2 ring-caramel/15' : 'border-caramel-light hover:border-caramel/50'
               }`}
             >
               <div className="flex items-center gap-2 mb-3">
                 <span
-                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                    isSelected ? 'border-amber-500' : 'border-gray-300'
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                    isSelected ? 'border-caramel' : 'border-espresso-soft/30'
                   }`}
                 >
-                  {isSelected && <span className="w-2 h-2 rounded-full bg-amber-500" />}
+                  {isSelected && <span className="w-2 h-2 rounded-full bg-caramel" />}
                 </span>
-                <span className="font-semibold text-amber-900">{method.label}</span>
+                <span className="font-semibold text-espresso">{method.label}</span>
               </div>
-              <div className="flex justify-center bg-white p-3">
+              <div className="flex justify-center bg-cream rounded-xl p-3">
                 <img
                   src={method.qrUrl}
                   alt={`${method.label} QR code`}
@@ -102,21 +122,81 @@ function PaymentUpload() {
         })}
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="block text-sm font-medium mb-1 text-amber-900">Proof of Payment</label>
+          <p className="text-sm font-semibold text-espresso mb-3">2. Upload your receipt</p>
+
           <input
+            ref={fileInputRef}
             type="file"
             accept="image/jpeg,image/jpg,image/png,image/webp"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="w-full border border-amber-300 rounded px-3 py-2"
-            required
+            onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+            className="sr-only"
+            id="payment-proof-input"
           />
-          <p className="text-xs text-gray-500 mt-1">JPG, PNG, or WEBP. Max 5MB.</p>
+
+          {!previewUrl ? (
+            <label
+              htmlFor="payment-proof-input"
+              onDragOver={(e) => {
+                e.preventDefault()
+                setIsDragging(true)
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+              className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-2xl px-6 py-10 text-center cursor-pointer transition-colors ${
+                isDragging ? 'border-caramel bg-caramel-light/40' : 'border-caramel-light bg-cream-deep hover:border-caramel/50'
+              }`}
+            >
+              <span className="text-3xl" aria-hidden="true">🧾</span>
+              <p className="font-display font-semibold text-espresso">Upload Receipt</p>
+              <p className="text-sm text-espresso-soft">Drag & drop or choose your payment screenshot</p>
+              <span className="mt-2 inline-block bg-caramel hover:bg-caramel-dark text-white rounded-full px-5 py-2 text-sm font-semibold shadow-sm transition-colors">
+                Choose File
+              </span>
+              <p className="text-xs text-espresso-soft/70 mt-2">JPG, PNG, or WEBP · Max 5MB</p>
+            </label>
+          ) : (
+            <div className="border border-caramel-light rounded-2xl p-4 bg-card">
+              <div className="flex items-start gap-4">
+                <img
+                  src={previewUrl}
+                  alt="Selected proof of payment preview"
+                  className="w-24 h-24 object-cover rounded-xl border border-caramel-light shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-espresso truncate">{file?.name}</p>
+                  <p className="text-xs text-espresso-soft mt-0.5">
+                    {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : ''}
+                  </p>
+                  <div className="flex gap-3 mt-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-xs font-semibold text-caramel-dark hover:text-caramel underline underline-offset-2"
+                    >
+                      Replace
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedFile(null)}
+                      className="text-xs font-semibold text-espresso-soft/70 hover:text-red-600 underline underline-offset-2"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <p className="text-xs text-espresso-soft mt-2">
+            After you submit, our team will review your receipt and confirm your order.
+          </p>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-800">
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-800">
             {error}
           </div>
         )}
@@ -124,7 +204,7 @@ function PaymentUpload() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-amber-500 hover:bg-amber-600 text-white rounded py-2 font-medium disabled:opacity-50 transition-colors"
+          className="w-full bg-caramel hover:bg-caramel-dark text-white rounded-full py-3.5 font-semibold shadow-sm hover:shadow-md active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100"
         >
           {loading ? 'Uploading...' : 'Submit Payment'}
         </button>

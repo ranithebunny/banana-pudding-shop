@@ -22,6 +22,9 @@ interface Product {
   category: { id: string; name: string } | null
 }
 
+const inputClass =
+  'w-full border border-caramel-light rounded-xl px-3 py-2 text-sm bg-cream text-espresso focus:outline-none focus:ring-2 focus:ring-caramel/40'
+
 function StaffProducts() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -174,38 +177,58 @@ function StaffProducts() {
     }
   }
 
-  if (loading) return <div className="p-8">Loading products...</div>
+  if (loading) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+        <div className="h-8 w-32 bg-cream-deep rounded animate-pulse mb-6" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-card border border-caramel-light/60 rounded-2xl h-52 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-amber-900">Products</h1>
+        <h1 className="font-display text-3xl font-semibold text-espresso">Products</h1>
         {editingId === null && (
-          <button onClick={startCreate} className="bg-amber-500 hover:bg-amber-600 text-white rounded px-4 py-2 text-sm font-medium transition-colors">
+          <button
+            onClick={startCreate}
+            className="bg-caramel hover:bg-caramel-dark text-white rounded-full px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md transition-all"
+          >
             Add Product
           </button>
         )}
       </div>
 
-      {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-800 mb-4">
+          {error}
+        </div>
+      )}
 
       {editingId !== null && (
-        <form onSubmit={handleSubmit} className="bg-white border border-amber-200 rounded-lg p-4 mb-6 space-y-3">
-          <h2 className="font-semibold text-amber-900">{editingId === 'new' ? 'New Product' : 'Edit Product'}</h2>
+        <form onSubmit={handleSubmit} className="bg-card border border-caramel-light/60 rounded-2xl p-5 mb-6 space-y-3 shadow-sm">
+          <h2 className="font-display font-semibold text-lg text-espresso mb-1">
+            {editingId === 'new' ? 'New Product' : 'Edit Product'}
+          </h2>
 
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Product name"
-            className="w-full border border-amber-300 rounded px-3 py-2 text-sm"
+            className={inputClass}
           />
           <input
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Description (optional)"
-            className="w-full border border-amber-300 rounded px-3 py-2 text-sm"
+            className={inputClass}
           />
           <div className="flex gap-3">
             <input
@@ -213,25 +236,25 @@ function StaffProducts() {
               value={price}
               onChange={(e) => setPrice(e.target.value)}
               placeholder="Price"
-              className="border border-amber-300 rounded px-3 py-2 text-sm w-28"
+              className={`${inputClass} w-28`}
             />
             <input
               type="number"
               value={cost}
               onChange={(e) => setCost(e.target.value)}
               placeholder="Cost"
-              className="border border-amber-300 rounded px-3 py-2 text-sm w-28"
+              className={`${inputClass} w-28`}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1 text-amber-900">Category</label>
+            <label className="block text-sm font-semibold mb-1.5 text-espresso">Category</label>
             {!showNewCategory ? (
               <div className="flex gap-2">
                 <select
                   value={categoryId}
                   onChange={(e) => setCategoryId(e.target.value)}
-                  className="flex-1 border border-amber-300 rounded px-3 py-2 text-sm bg-white"
+                  className={`${inputClass} flex-1`}
                 >
                   <option value="">No category</option>
                   {categories.map((c) => (
@@ -241,7 +264,7 @@ function StaffProducts() {
                 <button
                   type="button"
                   onClick={() => setShowNewCategory(true)}
-                  className="text-sm text-amber-600 whitespace-nowrap"
+                  className="text-sm font-semibold text-caramel-dark hover:text-caramel whitespace-nowrap"
                 >
                   + New category
                 </button>
@@ -253,19 +276,19 @@ function StaffProducts() {
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
                   placeholder="New category name"
-                  className="flex-1 border border-amber-300 rounded px-3 py-2 text-sm"
+                  className={`${inputClass} flex-1`}
                 />
                 <button
                   type="button"
                   onClick={handleCreateCategory}
-                  className="bg-amber-500 hover:bg-amber-600 text-white rounded px-3 py-2 text-sm transition-colors"
+                  className="bg-caramel hover:bg-caramel-dark text-white rounded-xl px-3 py-2 text-sm font-semibold transition-colors"
                 >
                   Add
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowNewCategory(false)}
-                  className="text-sm text-gray-600"
+                  className="text-sm text-espresso-soft hover:text-espresso"
                 >
                   Cancel
                 </button>
@@ -273,56 +296,61 @@ function StaffProducts() {
             )}
           </div>
 
-          <div className="border-t border-amber-100 pt-3">
-            <p className="text-sm font-medium text-amber-900 mb-2">Variants & Add-ons (optional)</p>
+          <div className="border-t border-caramel-light/60 pt-3">
+            <p className="text-sm font-semibold text-espresso mb-2">Variants & Add-ons (optional)</p>
             <div className="flex gap-3 mb-2">
               <input
                 type="text"
                 value={variantGroup}
                 onChange={(e) => setVariantGroup(e.target.value)}
                 placeholder="Variant group (e.g. Cookie)"
-                className="flex-1 border border-amber-300 rounded px-3 py-2 text-sm"
+                className={`${inputClass} flex-1`}
               />
               <input
                 type="text"
                 value={variantLabel}
                 onChange={(e) => setVariantLabel(e.target.value)}
                 placeholder="Variant label (e.g. Solo)"
-                className="flex-1 border border-amber-300 rounded px-3 py-2 text-sm"
+                className={`${inputClass} flex-1`}
               />
             </div>
-            <p className="text-xs text-gray-500 mb-2">
-              Give two or more products the same group name to show them as one item with a dropdown on the menu.
+            <p className="text-xs text-espresso-soft mb-2">
+              Give two or more products the same group name to show them as one item with flavor options on the menu.
             </p>
-            <label className="flex items-center gap-2 text-sm text-amber-900">
+            <label className="flex items-center gap-2 text-sm text-espresso">
               <input
                 type="checkbox"
                 checked={isAddOn}
                 onChange={(e) => setIsAddOn(e.target.checked)}
+                className="w-4 h-4 accent-caramel"
               />
               This is an add-on (offered as an extra when adding other products to cart)
             </label>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1 text-amber-900">Product Image</label>
+            <label className="block text-sm font-semibold mb-1.5 text-espresso">Product Image</label>
             <input
               type="file"
               accept="image/jpeg,image/jpg,image/png,image/webp"
               onChange={(e) => setImage(e.target.files?.[0] || null)}
-              className="w-full border border-amber-300 rounded px-3 py-2 text-sm"
+              className={`${inputClass} file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-caramel-light file:text-caramel-dark file:text-xs file:font-semibold`}
             />
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 pt-1">
             <button
               type="submit"
               disabled={submitting}
-              className="bg-amber-500 hover:bg-amber-600 text-white rounded px-4 py-2 text-sm font-medium disabled:opacity-50 transition-colors"
+              className="bg-caramel hover:bg-caramel-dark text-white rounded-full px-5 py-2 text-sm font-semibold shadow-sm hover:shadow-md transition-all disabled:opacity-50"
             >
               {submitting ? 'Saving...' : 'Save'}
             </button>
-            <button type="button" onClick={cancelEdit} className="text-sm text-gray-600">
+            <button
+              type="button"
+              onClick={cancelEdit}
+              className="text-sm text-espresso-soft hover:text-espresso font-medium"
+            >
               Cancel
             </button>
           </div>
@@ -331,22 +359,46 @@ function StaffProducts() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {products.map((product) => (
-          <div key={product.id} className="bg-white border border-amber-200 rounded-lg p-4">
+          <div
+            key={product.id}
+            className={`bg-card border border-caramel-light/60 rounded-2xl p-4 shadow-sm ${!product.isActive ? 'opacity-60' : ''}`}
+          >
             {product.image && (
-              <img src={product.image} alt={product.name} className="w-full h-32 object-cover rounded mb-2" />
+              <img src={product.image} alt={product.name} className="w-full h-32 object-cover rounded-xl mb-2.5" />
             )}
-            <p className="font-semibold text-amber-900">
+            <p className="font-display font-semibold text-espresso">
               {product.name}
-              {product.variantLabel && <span className="text-gray-500 font-normal"> ({product.variantLabel})</span>}
+              {product.variantLabel && <span className="text-espresso-soft font-normal font-body"> ({product.variantLabel})</span>}
             </p>
-            {product.category && (
-              <p className="text-xs text-amber-600">{product.category.name}</p>
-            )}
-            {product.isAddOn && <p className="text-xs text-amber-600">Add-on</p>}
-            <p className="text-sm text-gray-600">₱{product.price} · Cost ₱{product.cost}</p>
-            <div className="flex gap-2 mt-2">
-              <button onClick={() => startEdit(product)} className="text-sm text-amber-600">Edit</button>
-              <button onClick={() => toggleActive(product)} className="text-sm text-red-600">
+            <div className="flex items-center gap-1.5 mt-0.5">
+              {product.category && (
+                <span className="text-[11px] font-semibold bg-banana-light text-espresso-soft px-2 py-0.5 rounded-full">
+                  {product.category.name}
+                </span>
+              )}
+              {product.isAddOn && (
+                <span className="text-[11px] font-semibold bg-caramel-light text-caramel-dark px-2 py-0.5 rounded-full">
+                  Add-on
+                </span>
+              )}
+              {!product.isActive && (
+                <span className="text-[11px] font-semibold bg-red-50 text-red-700 px-2 py-0.5 rounded-full">
+                  Inactive
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-espresso-soft mt-1.5">₱{product.price} · Cost ₱{product.cost}</p>
+            <div className="flex gap-3 mt-2.5">
+              <button
+                onClick={() => startEdit(product)}
+                className="text-sm font-semibold text-caramel-dark hover:text-caramel"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => toggleActive(product)}
+                className="text-sm font-semibold text-espresso-soft/70 hover:text-red-600"
+              >
                 {product.isActive ? 'Deactivate' : 'Activate'}
               </button>
             </div>

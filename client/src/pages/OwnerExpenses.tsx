@@ -12,6 +12,9 @@ interface Expense {
 
 const CATEGORIES = ['GROCERIES', 'PACKAGING', 'DELIVERY', 'MARKETING', 'EQUIPMENT', 'OTHER']
 
+const inputClass =
+  'border border-caramel-light rounded-xl px-3 py-2 text-sm bg-cream text-espresso focus:outline-none focus:ring-2 focus:ring-caramel/40'
+
 function OwnerExpenses() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
@@ -116,48 +119,48 @@ function OwnerExpenses() {
     }
   }
 
- const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api'
 
-async function confirmDelete() {
-  if (!deletingExpense) return
-  try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(`${API_URL}/expenses/${deletingExpense.id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (!response.ok) {
-      const data = await response.json().catch(() => ({}))
-      throw new Error(data.error || 'Failed to delete expense.')
+  async function confirmDelete() {
+    if (!deletingExpense) return
+    try {
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API_URL}/expenses/${deletingExpense.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to delete expense.')
+      }
+      setDeletingExpense(null)
+      loadExpenses()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete expense.')
+      setDeletingExpense(null)
     }
-    setDeletingExpense(null)
-    loadExpenses()
-  } catch (err) {
-    setError(err instanceof Error ? err.message : 'Failed to delete expense.')
-    setDeletingExpense(null)
   }
-}
 
   const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0)
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-amber-900">Expenses</h1>
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+      <h1 className="font-display text-3xl font-semibold text-espresso mb-6">Expenses</h1>
 
       {successMessage && (
-        <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-2 mb-4 text-sm text-green-800">
-          {successMessage}
+        <div className="bg-leaf-light border border-leaf/30 rounded-xl px-4 py-2.5 mb-4 text-sm text-leaf font-semibold">
+          ✓ {successMessage}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white border border-amber-200 rounded-lg p-4 mb-6 space-y-3">
-        <h2 className="font-semibold text-amber-900">Record an Expense</h2>
+      <form onSubmit={handleSubmit} className="bg-card border border-caramel-light/60 rounded-2xl p-5 mb-6 space-y-3 shadow-sm">
+        <h2 className="font-display font-semibold text-lg text-espresso">Record an Expense</h2>
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="border border-amber-300 rounded px-3 py-2 text-sm bg-white"
+            className={inputClass}
           >
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>{c}</option>
@@ -169,14 +172,14 @@ async function confirmDelete() {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Amount"
-            className="border border-amber-300 rounded px-3 py-2 text-sm w-28"
+            className={`${inputClass} w-28`}
           />
 
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="border border-amber-300 rounded px-3 py-2 text-sm"
+            className={inputClass}
           />
         </div>
 
@@ -185,38 +188,60 @@ async function confirmDelete() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Description (optional)"
-          className="w-full border border-amber-300 rounded px-3 py-2 text-sm"
+          className={`${inputClass} w-full`}
         />
 
         {error && <p className="text-red-600 text-sm">{error}</p>}
 
-        <button type="submit" className="bg-amber-500 hover:bg-amber-600 text-white rounded px-4 py-2 text-sm font-medium transition-colors">
+        <button
+          type="submit"
+          className="bg-caramel hover:bg-caramel-dark text-white rounded-full px-5 py-2 text-sm font-semibold shadow-sm hover:shadow-md transition-all"
+        >
           Add Expense
         </button>
       </form>
 
       {loading ? (
-        <p>Loading...</p>
+        <div className="space-y-2.5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-20 bg-card border border-caramel-light/60 rounded-2xl animate-pulse" />
+          ))}
+        </div>
       ) : (
         <>
-          <p className="font-semibold mb-3 text-amber-900">Total: ₱{total}</p>
-          <div className="space-y-2">
+          <div className="bg-cream-deep rounded-2xl px-5 py-4 mb-4 flex items-center justify-between">
+            <span className="text-sm font-semibold text-espresso-soft">Total</span>
+            <span className="font-display text-2xl font-bold text-espresso">₱{total}</span>
+          </div>
+
+          <div className="space-y-2.5">
             {expenses.map((expense) => (
-              <div key={expense.id} className="bg-white border border-amber-200 rounded-lg px-4 py-3 text-sm">
-                <div className="flex justify-between">
-                  <div>
-                    <p className="font-medium text-amber-900">{expense.category} ₱{expense.amount}</p>
-                    {expense.description && <p className="text-gray-600">{expense.description}</p>}
-                    <p className="text-xs text-gray-500">
+              <div key={expense.id} className="bg-card border border-caramel-light/60 rounded-2xl px-4 py-3.5 shadow-sm">
+                <div className="flex justify-between items-start gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-[11px] font-semibold bg-caramel-light text-caramel-dark px-2 py-0.5 rounded-full">
+                        {expense.category}
+                      </span>
+                      <span className="font-display font-bold text-espresso">₱{expense.amount}</span>
+                    </div>
+                    {expense.description && <p className="text-sm text-espresso-soft">{expense.description}</p>}
+                    <p className="text-xs text-espresso-soft/70 mt-0.5">
                       {new Date(expense.date).toLocaleDateString()} — by {expense.createdBy.name}
                     </p>
                   </div>
                 </div>
-                <div className="flex gap-3 mt-2">
-                  <button onClick={() => startEdit(expense)} className="text-amber-600 font-medium">
+                <div className="flex gap-3 mt-2.5">
+                  <button
+                    onClick={() => startEdit(expense)}
+                    className="text-sm font-semibold text-caramel-dark hover:text-caramel"
+                  >
                     Edit
                   </button>
-                  <button onClick={() => setDeletingExpense(expense)} className="text-red-600 font-medium">
+                  <button
+                    onClick={() => setDeletingExpense(expense)}
+                    className="text-sm font-semibold text-espresso-soft/70 hover:text-red-600"
+                  >
                     Delete
                   </button>
                 </div>
@@ -227,17 +252,17 @@ async function confirmDelete() {
       )}
 
       {editingExpense && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-            <h2 className="font-semibold text-amber-900 mb-4">Edit Expense</h2>
+        <div className="fixed inset-0 bg-espresso/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-card rounded-3xl p-6 max-w-sm w-full shadow-xl">
+            <h2 className="font-display font-semibold text-lg text-espresso mb-4">Edit Expense</h2>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium mb-1 text-amber-900">Category</label>
+                <label className="block text-sm font-semibold mb-1.5 text-espresso">Category</label>
                 <select
                   value={editCategory}
                   onChange={(e) => setEditCategory(e.target.value)}
-                  className="w-full border border-amber-300 rounded px-3 py-2 text-sm bg-white"
+                  className={`${inputClass} w-full`}
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c} value={c}>{c}</option>
@@ -246,32 +271,32 @@ async function confirmDelete() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1 text-amber-900">Amount</label>
+                <label className="block text-sm font-semibold mb-1.5 text-espresso">Amount</label>
                 <input
                   type="number"
                   value={editAmount}
                   onChange={(e) => setEditAmount(e.target.value)}
-                  className="w-full border border-amber-300 rounded px-3 py-2 text-sm"
+                  className={`${inputClass} w-full`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1 text-amber-900">Date</label>
+                <label className="block text-sm font-semibold mb-1.5 text-espresso">Date</label>
                 <input
                   type="date"
                   value={editDate}
                   onChange={(e) => setEditDate(e.target.value)}
-                  className="w-full border border-amber-300 rounded px-3 py-2 text-sm"
+                  className={`${inputClass} w-full`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1 text-amber-900">Description</label>
+                <label className="block text-sm font-semibold mb-1.5 text-espresso">Description</label>
                 <input
                   type="text"
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
-                  className="w-full border border-amber-300 rounded px-3 py-2 text-sm"
+                  className={`${inputClass} w-full`}
                 />
               </div>
 
@@ -280,14 +305,14 @@ async function confirmDelete() {
               <div className="flex gap-2 pt-2">
                 <button
                   onClick={cancelEdit}
-                  className="flex-1 border border-amber-300 text-amber-900 rounded py-2 text-sm font-medium"
+                  className="flex-1 border border-caramel-light text-espresso rounded-full py-2.5 text-sm font-semibold hover:bg-cream-deep transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={saveEdit}
                   disabled={savingEdit}
-                  className="flex-1 bg-amber-500 hover:bg-amber-600 text-white rounded py-2 text-sm font-medium disabled:opacity-50 transition-colors"
+                  className="flex-1 bg-caramel hover:bg-caramel-dark text-white rounded-full py-2.5 text-sm font-semibold shadow-sm hover:shadow-md transition-all disabled:opacity-50"
                 >
                   {savingEdit ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -298,24 +323,24 @@ async function confirmDelete() {
       )}
 
       {deletingExpense && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full">
-            <p className="font-medium text-amber-900 mb-1">Delete this expense?</p>
-            <p className="text-sm text-gray-600 mb-1">
+        <div className="fixed inset-0 bg-espresso/40 flex items-center justify-center p-4 z-50">
+          <div className="bg-card rounded-3xl p-6 max-w-sm w-full shadow-xl">
+            <p className="font-display font-semibold text-lg text-espresso mb-1">Delete this expense?</p>
+            <p className="text-sm text-espresso-soft mb-1">
               ₱{deletingExpense.amount} — {deletingExpense.description || deletingExpense.category}
             </p>
-            <p className="text-xs text-gray-500 mb-4">This action cannot be undone.</p>
+            <p className="text-xs text-espresso-soft/70 mb-4">This action cannot be undone.</p>
 
             <div className="flex gap-2">
               <button
                 onClick={() => setDeletingExpense(null)}
-                className="flex-1 border border-amber-300 text-amber-900 rounded py-2 text-sm font-medium"
+                className="flex-1 border border-caramel-light text-espresso rounded-full py-2.5 text-sm font-semibold hover:bg-cream-deep transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmDelete}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded py-2 text-sm font-medium transition-colors"
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white rounded-full py-2.5 text-sm font-semibold transition-colors"
               >
                 Delete Expense
               </button>

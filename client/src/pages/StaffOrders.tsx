@@ -53,9 +53,37 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: 'Cancelled',
 }
 
+const STATUS_STYLES: Record<string, string> = {
+  PENDING_PAYMENT: 'bg-banana-light text-espresso',
+  PAYMENT_REVIEW: 'bg-banana-light text-espresso',
+  CONFIRMED: 'bg-caramel-light text-caramel-dark',
+  PREPARING: 'bg-caramel-light text-caramel-dark',
+  READY: 'bg-leaf-light text-leaf',
+  COMPLETED: 'bg-leaf text-white',
+  CANCELLED: 'bg-red-50 text-red-700',
+}
+
 const DELIVERY_METHOD_LABELS: Record<string, string> = {
   OWN_COURIER: "Customer's own courier",
   TEAM_DELIVERY: 'Team-handled delivery',
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const style = STATUS_STYLES[status] || 'bg-cream-deep text-espresso-soft'
+  return (
+    <span className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${style}`}>
+      {STATUS_LABELS[status] || status}
+    </span>
+  )
+}
+
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-3 text-sm py-0.5">
+      <span className="text-espresso-soft">{label}</span>
+      <span className="text-espresso font-medium text-right">{value}</span>
+    </div>
+  )
 }
 
 function StaffOrders() {
@@ -135,17 +163,28 @@ function StaffOrders() {
     }
   }
 
-  if (loading) return <div className="p-8">Loading orders...</div>
+  if (loading) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+        <div className="h-8 w-32 bg-cream-deep rounded animate-pulse mb-6" />
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-card border border-caramel-light/60 rounded-2xl p-4 h-20 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-amber-900">Orders</h1>
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+      <h1 className="font-display text-3xl font-semibold text-espresso mb-6">Orders</h1>
 
       <div className="flex gap-3 mb-6">
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="border border-amber-300 rounded px-3 py-2 text-sm bg-white"
+          className="border border-caramel-light rounded-xl px-3 py-2 text-sm bg-card text-espresso focus:outline-none focus:ring-2 focus:ring-caramel/40"
         >
           <option value="">All statuses</option>
           {Object.entries(STATUS_LABELS).map(([value, label]) => (
@@ -156,95 +195,106 @@ function StaffOrders() {
         </select>
       </div>
 
-      {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-800 mb-4">
+          {error}
+        </div>
+      )}
 
-      {orders.length === 0 && <p className="text-gray-600">No orders found.</p>}
+      {orders.length === 0 && <p className="text-espresso-soft">No orders found.</p>}
 
       <div className="space-y-3">
         {orders.map((order) => {
           const isExpanded = expandedIds.has(order.id)
           return (
-            <div key={order.id} className="bg-white border border-amber-200 rounded-lg overflow-hidden">
+            <div key={order.id} className="bg-card border border-caramel-light/60 rounded-2xl overflow-hidden shadow-sm">
               <button
                 type="button"
                 onClick={() => toggleExpanded(order.id)}
-                className="w-full text-left p-4 flex items-center justify-between gap-4"
+                className="w-full text-left p-4 flex items-center justify-between gap-4 hover:bg-cream-deep/40 transition-colors"
               >
-                <div>
-                  <p className="font-semibold text-amber-900">{order.orderNumber}</p>
-                  <p className="text-sm text-gray-600">
-                    {order.customer.name} — ₱{order.total} — {order.fulfillmentType}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <p className="font-display font-semibold text-espresso">{order.orderNumber}</p>
+                    <StatusBadge status={order.status} />
+                  </div>
+                  <p className="text-sm text-espresso-soft truncate">
+                    {order.customer.name} · ₱{order.total} · {order.fulfillmentType === 'PICKUP' ? 'Pickup' : 'Delivery'}
                   </p>
-                  <p className="text-xs text-gray-500">{STATUS_LABELS[order.status] || order.status}</p>
                 </div>
-                <span className="text-amber-600 text-sm shrink-0">{isExpanded ? '▲ Hide' : '▼ Details'}</span>
+                <span className="text-caramel-dark text-sm font-semibold shrink-0">
+                  {isExpanded ? '▲ Hide' : '▼ Details'}
+                </span>
               </button>
 
               {isExpanded && (
-                <div className="px-4 pb-4 border-t border-amber-100 pt-3 text-sm text-gray-700 space-y-2">
-                  <div>
-                    <p className="font-medium text-amber-900 mb-1">Items</p>
+                <div className="px-4 pb-4 border-t border-caramel-light/60 pt-4 space-y-3">
+                  <div className="bg-cream rounded-xl p-3">
+                    <p className="text-xs font-semibold text-espresso-soft uppercase tracking-wide mb-2">Items</p>
                     {order.items.map((item) => (
-                      <div key={item.id} className="flex justify-between">
+                      <div key={item.id} className="flex justify-between text-sm text-espresso py-0.5">
                         <span>{item.productName} × {item.quantity}</span>
-                        <span>₱{item.subtotal}</span>
+                        <span className="font-medium">₱{item.subtotal}</span>
                       </div>
                     ))}
-                    <div className="flex justify-between pt-1 mt-1 border-t border-amber-100">
+                    <div className="flex justify-between text-sm text-espresso-soft pt-1.5 mt-1.5 border-t border-caramel-light/60">
                       <span>Subtotal</span>
                       <span>₱{order.subtotal}</span>
                     </div>
                     {order.fulfillmentType === 'DELIVERY' && (
-                      <>
-                        <div className="flex justify-between">
-                          <span>Delivery Method</span>
-                          <span>
-                            {order.deliveryMethod
-                              ? DELIVERY_METHOD_LABELS[order.deliveryMethod] || order.deliveryMethod
-                              : '—'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Delivery Fee</span>
-                          <span>₱{order.deliveryFee}</span>
-                        </div>
-                      </>
+                      <div className="flex justify-between text-sm text-espresso-soft">
+                        <span>Delivery Fee</span>
+                        <span>₱{order.deliveryFee}</span>
+                      </div>
                     )}
-                    <div className="flex justify-between font-medium text-amber-900">
+                    <div className="flex justify-between text-sm font-semibold text-espresso pt-1.5 mt-1.5 border-t border-caramel-light/60">
                       <span>Total</span>
                       <span>₱{order.total}</span>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-amber-100">
-                    <p>Customer email: {order.customer.email}</p>
-                    <p>Fulfillment: {order.fulfillmentType}</p>
-                    {order.pickupDate && <p>Date: {new Date(order.pickupDate).toLocaleDateString()}</p>}
-                    {order.pickupTime && <p>Time: {order.pickupTime}</p>}
-                    {order.deliveryAddress && <p>Address: {order.deliveryAddress}</p>}
-                    {order.notes && <p>Notes: {order.notes}</p>}
-                  </div>
-
-                  {order.payment && (
-                    <div className="pt-2 border-t border-amber-100">
-                      <p>Payment method: {order.payment.paymentMethod}</p>
-                      <p>Payment status: {order.payment.status}</p>
-                      {order.payment.rejectionReason && (
-                        <p>Rejection reason: {order.payment.rejectionReason}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="bg-cream-deep rounded-xl p-3">
+                      <p className="text-xs font-semibold text-espresso-soft uppercase tracking-wide mb-1.5">
+                        Customer &amp; Fulfillment
+                      </p>
+                      <InfoRow label="Email" value={order.customer.email} />
+                      <InfoRow label="Type" value={order.fulfillmentType === 'PICKUP' ? 'Pickup' : 'Delivery'} />
+                      {order.fulfillmentType === 'DELIVERY' && order.deliveryMethod && (
+                        <InfoRow
+                          label="Method"
+                          value={DELIVERY_METHOD_LABELS[order.deliveryMethod] || order.deliveryMethod}
+                        />
                       )}
+                      {order.pickupDate && (
+                        <InfoRow label="Date" value={new Date(order.pickupDate).toLocaleDateString()} />
+                      )}
+                      {order.pickupTime && <InfoRow label="Time" value={order.pickupTime} />}
+                      {order.deliveryAddress && <InfoRow label="Address" value={order.deliveryAddress} />}
+                      {order.notes && <InfoRow label="Notes" value={order.notes} />}
                     </div>
-                  )}
+
+                    {order.payment && (
+                      <div className="bg-cream-deep rounded-xl p-3">
+                        <p className="text-xs font-semibold text-espresso-soft uppercase tracking-wide mb-1.5">
+                          Payment
+                        </p>
+                        <InfoRow label="Method" value={order.payment.paymentMethod} />
+                        <InfoRow label="Status" value={order.payment.status} />
+                        {order.payment.rejectionReason && (
+                          <InfoRow label="Rejection reason" value={order.payment.rejectionReason} />
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
-              <div
-                className="px-4 pb-4 flex gap-2"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <div className="px-4 pb-4 flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
                 {NEXT_STATUS[order.status] && (
                   <button
                     onClick={() => advanceStatus(order.id, NEXT_STATUS[order.status])}
-                    className="bg-amber-500 hover:bg-amber-600 text-white rounded px-4 py-1.5 text-sm font-medium transition-colors"
+                    className="bg-caramel hover:bg-caramel-dark text-white rounded-full px-4 py-1.5 text-sm font-semibold transition-colors"
                   >
                     Mark as {STATUS_LABELS[NEXT_STATUS[order.status]]}
                   </button>
@@ -252,7 +302,7 @@ function StaffOrders() {
                 {order.status !== 'COMPLETED' && order.status !== 'CANCELLED' && (
                   <button
                     onClick={() => cancelOrder(order.id)}
-                    className="bg-red-600 hover:bg-red-700 text-white rounded px-4 py-1.5 text-sm font-medium transition-colors"
+                    className="border border-red-300 text-red-700 hover:bg-red-50 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors"
                   >
                     Cancel
                   </button>
@@ -260,7 +310,7 @@ function StaffOrders() {
                 {user?.role === 'OWNER' && (
                   <button
                     onClick={() => deleteOrder(order.id)}
-                    className="text-sm text-gray-500 hover:text-red-600"
+                    className="text-xs text-espresso-soft/60 hover:text-red-600 underline underline-offset-2 ml-auto"
                   >
                     Delete
                   </button>
