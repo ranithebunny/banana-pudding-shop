@@ -8,7 +8,7 @@ A full-stack e-commerce platform for managing and selling banana pudding product
 
 ## 📋 Table of Contents
 
-- [Features](#Features)
+- [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
