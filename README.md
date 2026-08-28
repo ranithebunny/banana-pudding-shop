@@ -8,18 +8,18 @@ A full-stack e-commerce platform for managing and selling banana pudding product
 
 ## 📋 Table of Contents
 
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Project Structure](#-project-structure)
-- [Prerequisites](#-prerequisites)
-- [Installation](#-installation)
-- [Environment Setup](#-environment-setup)
-- [Running the Application](#-running-the-application)
-- [Demo Credentials](#-demo-credentials)
-- [API Endpoints](#-api-endpoints)
-- [User Roles](#-user-roles)
-- [Database Schema](#-database-schema)
-- [Contributing](#-contributing)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Environment Setup](#environment-setup)
+- [Running the Application](#running-the-application)
+- [Demo Credentials](#demo-credentials)
+- [API Endpoints](#api-endpoints)
+- [User Roles](#user-roles)
+- [Database Schema](#database-schema)
+- [Contributing](#contributing)
 
 ---
 
