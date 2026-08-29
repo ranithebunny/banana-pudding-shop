@@ -91,6 +91,7 @@ model Order {
   pickupTime       String?
   deliveryAddress  String?
   notes            String?
+  contactNumber    String?
   items            OrderItem[]
   payment          Payment?
   createdAt        DateTime        @default(now())

@@ -71,6 +71,7 @@ function Checkout() {
 
   const [fulfillmentType, setFulfillmentType] = useState('PICKUP')
   const [deliveryMethod, setDeliveryMethod] = useState('OWN_COURIER')
+  const [contactNumber, setContactNumber] = useState('')
   const [pickupDate, setPickupDate] = useState('')
   const [pickupTime, setPickupTime] = useState('')
   const [deliveryAddress, setDeliveryAddress] = useState('')
@@ -165,6 +166,7 @@ function Checkout() {
           items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
           fulfillmentType,
           deliveryMethod: fulfillmentType === 'DELIVERY' ? deliveryMethod : undefined,
+          contactNumber,
           pickupDate: pickupDate || undefined,
           pickupTime: pickupTime || undefined,
           deliveryAddress: deliveryAddress || undefined,
@@ -265,6 +267,19 @@ function Checkout() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="block text-sm font-semibold mb-1.5 text-espresso">Contact Number</label>
+          <input
+            type="tel"
+            value={contactNumber}
+            onChange={(e) => setContactNumber(e.target.value)}
+            placeholder="09XX XXX XXXX"
+            className="w-full border border-caramel-light rounded-xl px-3 py-2.5 bg-card text-espresso focus:outline-none focus:ring-2 focus:ring-caramel/40"
+            required
+          />
+          <p className="text-xs text-espresso-soft mt-1.5">We'll use this to reach you about your order.</p>
+        </div>
+
         <div>
           <label className="block text-sm font-semibold mb-1.5 text-espresso">Pickup or Delivery</label>
           <select

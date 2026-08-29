@@ -29,6 +29,7 @@ interface Order {
   pickupDate: string | null
   pickupTime: string | null
   deliveryAddress: string | null
+  contactNumber: string | null
   notes: string | null
   items: OrderItem[]
   payment: Payment | null
@@ -188,6 +189,7 @@ function OrderDetail() {
 
       <div className="bg-cream-deep rounded-2xl p-5 text-sm text-espresso space-y-1.5 mb-6">
         <p><span className="text-espresso-soft">Fulfillment:</span> {order.fulfillmentType === 'PICKUP' ? 'Pickup' : 'Delivery'}</p>
+        {order.contactNumber && <p><span className="text-espresso-soft">Contact:</span> {order.contactNumber}</p>}
         {order.pickupDate && <p><span className="text-espresso-soft">Date:</span> {new Date(order.pickupDate).toLocaleDateString()}</p>}
         {order.pickupTime && <p><span className="text-espresso-soft">Time:</span> {order.pickupTime}</p>}
         {order.deliveryAddress && <p><span className="text-espresso-soft">Address:</span> {order.deliveryAddress}</p>}

@@ -64,6 +64,7 @@ function Products() {
   const [pendingItem, setPendingItem] = useState<{ id: string; name: string; price: number } | null>(null)
   const [selectedAddOnIds, setSelectedAddOnIds] = useState<string[]>([])
   const [toastMsg, setToastMsg] = useState<string | null>(null)
+  const [quickViewKey, setQuickViewKey] = useState<string | null>(null)
   const { addItem } = useCart()
 
   useEffect(() => {
@@ -184,6 +185,8 @@ function Products() {
     setSelectedAddOnIds([])
   }
 
+  const quickViewItem = displayItems.find((item) => item.key === quickViewKey) || null
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-16">
       {/* Hero */}
@@ -211,7 +214,14 @@ function Products() {
             return (
               <div
                 key={item.key}
-                className={`group bg-card rounded-2xl overflow-hidden shadow-sm border border-caramel-light/60 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 ${
+                onClick={() => setQuickViewKey(item.key)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') setQuickViewKey(item.key)
+                }}
+                aria-label={`View details for ${item.name}`}
+                className={`group bg-card rounded-2xl overflow-hidden shadow-sm border border-caramel-light/60 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer ${
                   outOfStock ? 'opacity-70' : ''
                 }`}
               >
@@ -242,11 +252,19 @@ function Products() {
                   <h2 className="font-display text-lg font-semibold text-espresso leading-tight">{item.name}</h2>
 
                   {item.description && (
-                    <p className="text-sm text-espresso-soft mt-1 mb-3 line-clamp-2">{item.description}</p>
+                    <p className="text-sm text-espresso-soft mt-1 mb-3 line-clamp-2">
+                      {item.description}{' '}
+                      <span className="text-caramel-dark font-semibold whitespace-nowrap">Read more</span>
+                    </p>
                   )}
 
                   {item.variants.length > 1 && (
-                    <div className="flex flex-wrap gap-1.5 mb-3" role="group" aria-label={`${item.name} flavor`}>
+                    <div
+                      className="flex flex-wrap gap-1.5 mb-3"
+                      role="group"
+                      aria-label={`${item.name} flavor`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {item.variants.map((v) => {
                         const isSelected = selected.id === v.id
                         const variantOut = v.stock <= 0
@@ -276,7 +294,10 @@ function Products() {
                   </div>
 
                   <button
-                    onClick={() => handleAddClick(item)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleAddClick(item)
+                    }}
                     disabled={outOfStock}
                     className="w-full bg-caramel hover:bg-caramel-dark text-white rounded-full py-2.5 text-sm font-semibold shadow-sm hover:shadow-md active:scale-[0.98] transition-all disabled:bg-cream-deep disabled:text-espresso-soft/50 disabled:shadow-none disabled:cursor-not-allowed disabled:active:scale-100"
                   >
@@ -288,6 +309,98 @@ function Products() {
           })}
         </div>
       )}
+
+      {/* Quick view modal — full description */}
+      {quickViewItem && (() => {
+        const selected = getSelectedProduct(quickViewItem)
+        const outOfStock = selected.stock <= 0
+        return (
+          <div
+            className="fixed inset-0 bg-espresso/40 flex items-center justify-center p-4 z-50"
+            onClick={() => setQuickViewKey(null)}
+          >
+            <div
+              className="bg-card rounded-3xl max-w-md w-full shadow-xl overflow-hidden max-h-[85vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative">
+                {quickViewItem.image && (
+                  <img
+                    src={quickViewItem.image}
+                    alt={quickViewItem.name}
+                    className={`w-full h-56 object-cover ${outOfStock ? 'grayscale' : ''}`}
+                  />
+                )}
+                <button
+                  onClick={() => setQuickViewKey(null)}
+                  className="absolute top-3 right-3 bg-card/90 hover:bg-card text-espresso rounded-full w-8 h-8 flex items-center justify-center text-lg leading-none shadow-sm"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="p-5">
+                {quickViewItem.category && (
+                  <span className="inline-block bg-banana-light text-espresso-soft text-[11px] font-semibold px-2 py-0.5 rounded-full mb-1.5">
+                    {quickViewItem.category.name}
+                  </span>
+                )}
+                <h2 className="font-display text-2xl font-semibold text-espresso mb-2">{quickViewItem.name}</h2>
+                {quickViewItem.description && (
+                  <p className="text-sm text-espresso-soft mb-4 leading-relaxed">{quickViewItem.description}</p>
+                )}
+
+                {quickViewItem.variants.length > 1 && (
+                  <div className="flex flex-wrap gap-1.5 mb-4" role="group" aria-label={`${quickViewItem.name} flavor`}>
+                    {quickViewItem.variants.map((v) => {
+                      const isSelected = selected.id === v.id
+                      const variantOut = v.stock <= 0
+                      return (
+                        <button
+                          key={v.id}
+                          type="button"
+                          disabled={variantOut}
+                          onClick={() => setSelectedVariant((prev) => ({ ...prev, [quickViewItem.key]: v.id }))}
+                          className={`text-xs font-semibold px-2.5 py-1 rounded-full border transition-colors ${
+                            variantOut
+                              ? 'border-caramel-light text-espresso-soft/40 line-through cursor-not-allowed'
+                              : isSelected
+                              ? 'bg-caramel border-caramel text-white'
+                              : 'border-caramel-light text-espresso-soft hover:border-caramel'
+                          }`}
+                        >
+                          {v.variantLabel}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between mb-4">
+                  <p className="font-display text-2xl font-bold text-espresso">₱{selected.price}</p>
+                  {outOfStock && (
+                    <span className="bg-espresso/90 text-cream text-[11px] font-semibold tracking-wide px-2.5 py-1 rounded-full">
+                      Out of stock
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => {
+                    handleAddClick(quickViewItem)
+                    setQuickViewKey(null)
+                  }}
+                  disabled={outOfStock}
+                  className="w-full bg-caramel hover:bg-caramel-dark text-white rounded-full py-2.5 text-sm font-semibold shadow-sm hover:shadow-md active:scale-[0.98] transition-all disabled:bg-cream-deep disabled:text-espresso-soft/50 disabled:shadow-none disabled:cursor-not-allowed"
+                >
+                  {outOfStock ? 'Out of Stock' : 'Add to Cart'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {pendingItem && addOns.length > 0 && (
         <div className="fixed inset-0 bg-espresso/40 flex items-center justify-center p-4 z-50">

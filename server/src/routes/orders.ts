@@ -15,13 +15,16 @@ const DELIVERY_FEES: Record<string, number> = {
 // POST /api/orders — create a new order (customer must be logged in)
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { items, fulfillmentType, pickupDate, pickupTime, deliveryAddress, deliveryMethod, notes } = req.body;
+    const { items, fulfillmentType, pickupDate, pickupTime, deliveryAddress, deliveryMethod, notes, contactNumber } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Order must contain at least one item.' });
     }
     if (!fulfillmentType) {
       return res.status(400).json({ error: 'Fulfillment type is required.' });
+    }
+    if (!contactNumber || !contactNumber.trim()) {
+      return res.status(400).json({ error: 'Contact number is required.' });
     }
     if (fulfillmentType === 'DELIVERY' && !DELIVERY_FEES.hasOwnProperty(deliveryMethod)) {
       return res.status(400).json({ error: 'A valid delivery method is required.' });
@@ -125,6 +128,7 @@ router.post('/', authenticate, async (req, res) => {
         pickupTime,
         deliveryAddress,
         notes,
+        contactNumber: contactNumber.trim(),
         items: {
           create: orderItemsData,
         },
@@ -147,38 +151,6 @@ router.post('/', authenticate, async (req, res) => {
   }
 });
 
-// GET /api/orders — logged-in customer's own orders
-router.get('/', authenticate, async (req, res) => {
-  try {
-    const orders = await prisma.order.findMany({
-      where: { customerId: req.user!.userId },
-      include: { items: true, payment: true },
-      orderBy: { createdAt: 'desc' },
-    });
-    res.json(orders);
-  } catch (error) {
-    console.error('Get orders error:', error);
-    res.status(500).json({ error: 'Something went wrong.' });
-  }
-});
-
-// GET /api/orders/staff/all — staff/owner: view all orders, optionally filtered by status
-router.get('/staff/all', authenticate, authorize('STAFF', 'OWNER'), async (req, res) => {
-  try {
-    const { status } = req.query;
-
-    const orders = await prisma.order.findMany({
-      where: status ? { status: status as string } : undefined,
-      include: { items: true, payment: true, customer: { select: { name: true, email: true } } },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    res.json(orders);
-  } catch (error) {
-    console.error('Get all orders error:', error);
-    res.status(500).json({ error: 'Something went wrong.' });
-  }
-});
 // POST /api/orders/preview — staff-only: preview discount breakdown before checkout (no order created)
 router.post('/preview', authenticate, async (req, res) => {
   try {
@@ -222,6 +194,40 @@ router.post('/preview', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Something went wrong.' });
   }
 });
+
+// GET /api/orders — logged-in customer's own orders
+router.get('/', authenticate, async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: { customerId: req.user!.userId },
+      include: { items: true, payment: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(orders);
+  } catch (error) {
+    console.error('Get orders error:', error);
+    res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
+
+// GET /api/orders/staff/all — staff/owner: view all orders, optionally filtered by status
+router.get('/staff/all', authenticate, authorize('STAFF', 'OWNER'), async (req, res) => {
+  try {
+    const { status } = req.query;
+
+    const orders = await prisma.order.findMany({
+      where: status ? { status: status as string } : undefined,
+      include: { items: true, payment: true, customer: { select: { name: true, email: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json(orders);
+  } catch (error) {
+    console.error('Get all orders error:', error);
+    res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
+
 // GET /api/orders/:id — one order (only its owner can view it)
 router.get('/:id', authenticate, async (req, res) => {
   try {
@@ -328,6 +334,5 @@ router.delete('/:id', authenticate, authorize('OWNER'), async (req, res) => {
     res.status(500).json({ error: 'Something went wrong.' });
   }
 });
-
 
 export default router;

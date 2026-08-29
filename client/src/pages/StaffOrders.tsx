@@ -30,6 +30,7 @@ interface Order {
   pickupDate: string | null
   pickupTime: string | null
   deliveryAddress: string | null
+  contactNumber: string | null
   notes: string | null
   customer: { name: string; email: string }
   items: OrderItem[]
@@ -259,6 +260,7 @@ function StaffOrders() {
                         Customer &amp; Fulfillment
                       </p>
                       <InfoRow label="Email" value={order.customer.email} />
+                      {order.contactNumber && <InfoRow label="Contact" value={order.contactNumber} />}
                       <InfoRow label="Type" value={order.fulfillmentType === 'PICKUP' ? 'Pickup' : 'Delivery'} />
                       {order.fulfillmentType === 'DELIVERY' && order.deliveryMethod && (
                         <InfoRow
