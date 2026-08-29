@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
@@ -30,6 +30,21 @@ function CartIcon() {
   )
 }
 
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      fill="none"
+      className={`transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
+      aria-hidden="true"
+    >
+      <path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 function MenuIcon({ open }: { open: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -39,6 +54,47 @@ function MenuIcon({ open }: { open: boolean }) {
         <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       )}
     </svg>
+  )
+}
+
+const dropdownLinkClass =
+  'block px-3 py-2 text-sm text-espresso-soft hover:text-espresso hover:bg-cream-deep rounded-lg mx-1.5 whitespace-nowrap transition-colors'
+
+function NavDropdown({ label, children }: { label: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`text-sm font-medium transition-colors px-2 py-1.5 rounded-lg flex items-center gap-1 ${
+          open ? 'bg-cream-deep text-espresso' : 'text-espresso-soft hover:text-espresso hover:bg-cream-deep'
+        }`}
+      >
+        {label}
+        <ChevronIcon open={open} />
+      </button>
+      {open && (
+        <div
+          onClick={() => setOpen(false)}
+          className="absolute top-full left-0 mt-1.5 bg-card border border-caramel-light rounded-xl shadow-lg py-1.5 min-w-[170px] z-10"
+        >
+          {children}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -100,19 +156,23 @@ function Nav() {
                 {isStaffOrOwner && (
                   <>
                     <span className="w-px h-5 bg-caramel-light mx-1" aria-hidden="true" />
-                    <Link to="/staff/payments" className={linkClass}>Payments</Link>
-                    <Link to="/staff/inventory" className={linkClass}>Inventory</Link>
-                    <Link to="/staff/orders" className={linkClass}>Orders</Link>
-                    <Link to="/staff/products" className={linkClass}>Products</Link>
-                    <Link to="/dashboard" className={linkClass}>Dashboard</Link>
+                    <NavDropdown label="Staff Tools">
+                      <Link to="/staff/payments" className={dropdownLinkClass}>Payments</Link>
+                      <Link to="/staff/inventory" className={dropdownLinkClass}>Inventory</Link>
+                      <Link to="/staff/orders" className={dropdownLinkClass}>Orders</Link>
+                      <Link to="/staff/products" className={dropdownLinkClass}>Products</Link>
+                      <Link to="/dashboard" className={dropdownLinkClass}>Dashboard</Link>
+                    </NavDropdown>
                   </>
                 )}
 
                 {isOwner && (
                   <>
-                    <span className="w-px h-5 bg-caramel-light mx-1" aria-hidden="true" />
-                    <Link to="/owner/expenses" className={linkClass}>Expenses</Link>
-                    <Link to="/owner/audit-logs" className={linkClass}>Audit Log</Link>
+                    <NavDropdown label="Owner Tools">
+                      <Link to="/owner/expenses" className={dropdownLinkClass}>Expenses</Link>
+                      <Link to="/owner/staff" className={dropdownLinkClass}>Manage Staff</Link>
+                      <Link to="/owner/audit-logs" className={dropdownLinkClass}>Audit Log</Link>
+                    </NavDropdown>
                     <button
                       onClick={handleViewStore}
                       className="text-sm font-semibold text-caramel-dark hover:text-caramel px-2 py-1.5 rounded-lg hover:bg-caramel-light transition-colors"
@@ -189,6 +249,7 @@ function Nav() {
 
                 {isStaffOrOwner && (
                   <>
+                    <p className="text-xs font-semibold text-espresso-soft/70 uppercase tracking-wide px-2 pt-2">Staff Tools</p>
                     <Link to="/staff/payments" className={linkClass} onClick={() => setMenuOpen(false)}>Payments</Link>
                     <Link to="/staff/inventory" className={linkClass} onClick={() => setMenuOpen(false)}>Inventory</Link>
                     <Link to="/staff/orders" className={linkClass} onClick={() => setMenuOpen(false)}>Orders</Link>
@@ -199,9 +260,11 @@ function Nav() {
 
                 {isOwner && (
                   <>
+                    <p className="text-xs font-semibold text-espresso-soft/70 uppercase tracking-wide px-2 pt-2">Owner Tools</p>
                     <Link to="/owner/expenses" className={linkClass} onClick={() => setMenuOpen(false)}>Expenses</Link>
+                    <Link to="/owner/staff" className={linkClass} onClick={() => setMenuOpen(false)}>Manage Staff</Link>
                     <Link to="/owner/audit-logs" className={linkClass} onClick={() => setMenuOpen(false)}>Audit Log</Link>
-                    <button onClick={handleViewStore} className={`${linkClass} text-left text-caramel-dark`}>
+                    <button onClick={handleViewStore} className={`${linkClass} text-left text-caramel-dark mt-1`}>
                       View Store
                     </button>
                   </>

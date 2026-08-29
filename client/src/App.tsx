@@ -16,6 +16,7 @@ import Dashboard from './pages/Dashboard'
 import AuditLogs from './pages/AuditLogs'
 import MyOrders from './pages/MyOrders'
 import StaffProducts from './pages/StaffProducts'
+import ManageStaff from './pages/ManageStaff'
 
 function App() {
   return (
@@ -83,6 +84,14 @@ function App() {
           element={
             <RequireRole roles={['OWNER']}>
               <AuditLogs />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/owner/staff"
+          element={
+            <RequireRole roles={['OWNER']}>
+              <ManageStaff />
             </RequireRole>
           }
         />
