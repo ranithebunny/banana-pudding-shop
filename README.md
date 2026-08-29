@@ -26,7 +26,6 @@ A full-stack e-commerce platform for managing and selling banana pudding product
 ## ✨ Features
 
 ### Customer Features
-- Browse products by category
 - Add/remove items from cart
 - Checkout and place orders
 - Upload payment proof
