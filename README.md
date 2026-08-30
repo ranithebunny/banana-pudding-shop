@@ -364,7 +364,7 @@ This project is licensed under the MIT License - see LICENSE file for details.
 - [ ] Email notifications for orders
 - [ ] Advanced inventory analytics
 - [ ] Multi-payment gateway support
-- [ ] Customer reviews and ratings
+- [x] Customer reviews and ratings
 - [ ] Promotional codes and discounts for customers
 
 ---
