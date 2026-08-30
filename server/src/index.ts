@@ -12,6 +12,8 @@ import auditLogRoutes from './routes/auditLogs';
 import categoryRoutes from './routes/categories';
 import cron from 'node-cron';
 import { autoCancelExpiredOrders } from './lib/autoCancelOrders';
+import reviewsRouter from './routes/reviews';
+
 dotenv.config();
 
 const app = express();
@@ -26,6 +28,7 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/reviews', reviewsRouter);
 app.get('/', (req, res) => {
   res.json({ message: 'Server is running' });
 });

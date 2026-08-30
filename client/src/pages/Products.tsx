@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '../lib/api'
 import { useCart } from '../context/CartContext'
+import ProductReviews, { Stars } from '../components/ProductReviews'
 
 interface Product {
   id: string
@@ -22,6 +23,11 @@ interface DisplayItem {
   image: string | null
   category: { id: string; name: string } | null
   variants: Product[]
+}
+
+interface RatingSummary {
+  averageRating: number
+  count: number
 }
 
 function DollopWatermark() {
@@ -65,6 +71,7 @@ function Products() {
   const [selectedAddOnIds, setSelectedAddOnIds] = useState<string[]>([])
   const [toastMsg, setToastMsg] = useState<string | null>(null)
   const [quickViewKey, setQuickViewKey] = useState<string | null>(null)
+  const [ratingSummary, setRatingSummary] = useState<Record<string, RatingSummary>>({})
   const { addItem } = useCart()
 
   useEffect(() => {
@@ -78,7 +85,16 @@ function Products() {
         setLoading(false)
       }
     }
+    async function loadRatingSummary() {
+      try {
+        const data = await apiFetch('/reviews/summary')
+        setRatingSummary(data)
+      } catch {
+        // ratings are supplementary — fail quietly
+      }
+    }
     loadProducts()
+    loadRatingSummary()
   }, [])
 
   useEffect(() => {
@@ -143,6 +159,20 @@ function Products() {
   function getSelectedProduct(item: DisplayItem): Product {
     const selectedId = selectedVariant[item.key]
     return item.variants.find((v) => v.id === selectedId) || item.variants[0]
+  }
+
+  // Merge rating summaries across all variants of an item so the card shows one combined score
+  function getItemRating(item: DisplayItem): RatingSummary {
+    let totalCount = 0
+    let weightedSum = 0
+    for (const v of item.variants) {
+      const s = ratingSummary[v.id]
+      if (s) {
+        totalCount += s.count
+        weightedSum += s.averageRating * s.count
+      }
+    }
+    return { averageRating: totalCount > 0 ? weightedSum / totalCount : 0, count: totalCount }
   }
 
   function handleAddClick(item: DisplayItem) {
@@ -211,6 +241,7 @@ function Products() {
           {displayItems.map((item) => {
             const selected = getSelectedProduct(item)
             const outOfStock = selected.stock <= 0
+            const rating = getItemRating(item)
             return (
               <div
                 key={item.key}
@@ -250,6 +281,15 @@ function Products() {
                   )}
 
                   <h2 className="font-display text-lg font-semibold text-espresso leading-tight">{item.name}</h2>
+
+                  {rating.count > 0 && (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <Stars value={rating.averageRating} />
+                      <span className="text-xs text-espresso-soft">
+                        {rating.averageRating.toFixed(1)} ({rating.count})
+                      </span>
+                    </div>
+                  )}
 
                   {item.description && (
                     <p className="text-sm text-espresso-soft mt-1 mb-3 line-clamp-2">
@@ -310,7 +350,7 @@ function Products() {
         </div>
       )}
 
-      {/* Quick view modal — full description */}
+      {/* Quick view modal — full description + reviews */}
       {quickViewItem && (() => {
         const selected = getSelectedProduct(quickViewItem)
         const outOfStock = selected.stock <= 0
@@ -396,6 +436,8 @@ function Products() {
                 >
                   {outOfStock ? 'Out of Stock' : 'Add to Cart'}
                 </button>
+
+                <ProductReviews productId={selected.id} />
               </div>
             </div>
           </div>
